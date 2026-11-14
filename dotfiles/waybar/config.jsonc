@@ -1,0 +1,94 @@
+{
+    "layer": "top",
+    "position": "top",
+    "height": 34,
+    "margin-top": 8,
+    "margin-left": 14,
+    "margin-right": 14,
+    "spacing": 6,
+
+    "modules-left": ["custom/launcher", "hyprland/workspaces", "hyprland/window"],
+    "modules-center": ["clock"],
+    "modules-right": ["hyprland/language", "pulseaudio", "cpu", "memory", "custom/gpu", "network", "tray", "custom/power"],
+
+    "custom/launcher": {
+        "format": "◆ nyarch",
+        "tooltip": false,
+        "on-click": "wofi --show drun"
+    },
+
+    "hyprland/workspaces": {
+        "format": "{id}",
+        "on-click": "activate",
+        "persistent-workspaces": { "*": 5 }
+    },
+
+    "hyprland/window": {
+        "format": "{title}",
+        "max-length": 48,
+        "separate-outputs": true
+    },
+
+    "clock": {
+        "format": "{:%H:%M}",
+        "format-alt": "{:%A, %d %B}",
+        "tooltip-format": "<tt>{calendar}</tt>",
+        "calendar": {
+            "mode": "month",
+            "format": {
+                "today": "<span color='#2ee6c8'><b>{}</b></span>"
+            }
+        }
+    },
+
+    "hyprland/language": {
+        "format": "{short}",
+        "format-en": "EN",
+        "format-ru": "RU"
+    },
+
+    "pulseaudio": {
+        "format": "<span color='#5f8f8a'>vol</span> {volume}%",
+        "format-muted": "<span color='#ff7a9c'>mute</span>",
+        "scroll-step": 2,
+        "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
+        "tooltip": false
+    },
+
+    "cpu": {
+        "interval": 3,
+        "format": "<span color='#5f8f8a'>cpu</span> {usage}%",
+        "tooltip": false
+    },
+
+    "memory": {
+        "interval": 5,
+        "format": "<span color='#5f8f8a'>ram</span> {percentage}%",
+        "tooltip-format": "{used:0.1f} / {total:0.1f} GiB"
+    },
+
+    "custom/gpu": {
+        "exec": "~/.config/waybar/scripts/gpu.sh",
+        "interval": 5,
+        "format": "{}",
+        "tooltip": false
+    },
+
+    "network": {
+        "interval": 5,
+        "format-wifi": "<span color='#5f8f8a'>wifi</span> {signalStrength}%",
+        "format-ethernet": "<span color='#5f8f8a'>net</span> up",
+        "format-disconnected": "<span color='#ff7a9c'>offline</span>",
+        "tooltip-format": "{ifname}  {ipaddr}"
+    },
+
+    "tray": {
+        "spacing": 10
+    },
+
+    "custom/power": {
+        "format": "⏻",
+        "tooltip": false,
+        "on-click": "~/.config/waybar/scripts/power.sh"
+    }
+}

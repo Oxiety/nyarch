@@ -1,0 +1,61 @@
+/* nyarch wofi */
+
+* {
+    font-family: "JetBrainsMono Nerd Font", "Noto Sans", sans-serif;
+    font-size: 14px;
+}
+
+window {
+    margin: 0;
+    border: 2px solid #2ee6c8;
+    border-radius: 16px;
+    background-color: rgba(8, 20, 22, 0.92);
+}
+
+#outer-box {
+    margin: 0;
+    background-color: transparent;
+}
+
+#input {
+    margin: 12px;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 12px;
+    background-color: rgba(46, 230, 200, 0.08);
+    color: #d7f5ef;
+    box-shadow: none;
+    outline: none;
+}
+
+#inner-box {
+    margin: 0 12px 12px 12px;
+    background-color: transparent;
+}
+
+#scroll {
+    margin: 0;
+}
+
+#entry {
+    padding: 6px;
+    border-radius: 10px;
+}
+
+#entry:selected {
+    background-color: rgba(46, 230, 200, 0.18);
+    outline: none;
+}
+
+#img {
+    margin-right: 10px;
+}
+
+#text {
+    margin: 4px 8px;
+    color: #d7f5ef;
+}
+
+#entry:selected #text {
+    color: #2ee6c8;
+}
