@@ -10,8 +10,14 @@ sudo pacman -S --needed --noconfirm \
     waybar swaybg kitty wofi mako \
     thunar thunar-volman gvfs \
     grim slurp wl-clipboard \
-    starship papirus-icon-theme \
+    starship fastfetch papirus-icon-theme \
     ttf-jetbrains-mono-nerd noto-fonts noto-fonts-emoji
+
+echo "==> Панели настроек (по одной, чтобы один сбой не ломал остальное)"
+for p in pavucontrol network-manager-applet nm-connection-editor blueman nwg-look hyprpolkitagent udiskie; do
+    sudo pacman -S --needed --noconfirm "$p" || echo "    пропустил $p"
+done
+systemctl --user enable --now hyprpolkitagent.service 2>/dev/null || true
 
 echo "==> Конфиги"
 find "$DIR/dotfiles" -type f | while read -r src; do
@@ -37,9 +43,12 @@ else
     echo "    ВНИМАНИЕ: нет ~/Pictures/wall.jpg"
 fi
 
-echo "==> Промпт starship"
+echo "==> Промпт starship и алиасы"
 if ! grep -q 'starship init bash' "$HOME/.bashrc" 2>/dev/null; then
     printf '\neval "$(starship init bash)"\n' >> "$HOME/.bashrc"
+fi
+if ! grep -q '# nyarch aliases' "$HOME/.bashrc" 2>/dev/null; then
+    printf "\n# nyarch aliases\nalias ff=fastfetch\nalias update='sudo pacman -Syu'\n" >> "$HOME/.bashrc"
 fi
 
 echo "==> Тёмная тема GTK"

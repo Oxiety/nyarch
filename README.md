@@ -21,6 +21,9 @@ bash ~/nyarch/install.sh
 - `dotfiles/kitty`: терминал
 - `dotfiles/gtk-3.0`, `dotfiles/gtk-4.0`: тёмная тема и иконки
 - `dotfiles/starship.toml`: промпт
+- `dotfiles/fastfetch`: инфо о системе (команда `ff`)
+
+Клик по звуку в баре открывает микшер (pavucontrol), клик по сети открывает настройки сети, правый клик по звуку включает и выключает звук. Wi-Fi, Bluetooth и флешки живут в трее. Внешний вид программ настраивается через `nwg-look`.
 - `wall`: обои
 
 ## Клавиши

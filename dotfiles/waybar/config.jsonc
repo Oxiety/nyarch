@@ -51,7 +51,8 @@
         "format": "<span color='#5f8f8a'>vol</span> {volume}%",
         "format-muted": "<span color='#ff7a9c'>mute</span>",
         "scroll-step": 2,
-        "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
+        "on-click": "pavucontrol",
+        "on-click-right": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
         "tooltip": false
     },
 
@@ -79,7 +80,8 @@
         "format-wifi": "<span color='#5f8f8a'>wifi</span> {signalStrength}%",
         "format-ethernet": "<span color='#5f8f8a'>net</span> up",
         "format-disconnected": "<span color='#ff7a9c'>offline</span>",
-        "tooltip-format": "{ifname}  {ipaddr}"
+        "tooltip-format": "{ifname}  {ipaddr}",
+        "on-click": "nm-connection-editor"
     },
 
     "tray": {
