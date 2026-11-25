@@ -1,4 +1,5 @@
-/* Northling Arch — Waybar: плавающие скруглённые «таблетки», Northling Midnight */
+/* Northling Midnight — Waybar «Острова».
+   Бар без общей подложки: каждый блок — отдельный стеклянный остров. */
 
 * {
     font-family: "JetBrainsMono Nerd Font", "Noto Sans", sans-serif;
@@ -8,115 +9,95 @@
     min-height: 0;
     box-shadow: none;
     text-shadow: none;
+    transition: all 260ms cubic-bezier(0.2, 0.9, 0.3, 1);
 }
 
-window#waybar {
-    background: rgba(14, 10, 36, 0.88);
-    color: #E5E7F5;
-    border: 1px solid rgba(167, 139, 250, 0.30);
-    border-radius: 14px;
-}
+window#waybar { background: transparent; color: #E5E7F5; }
 
-#custom-launcher,
-#workspaces,
-#window,
-#clock,
-#custom-notification,
-#language,
-#pulseaudio,
-#cpu,
-#memory,
-#custom-gpu,
-#network,
-#tray,
-#custom-power {
-    background: rgba(167, 139, 250, 0.10);
-    color: #E5E7F5;
-    padding: 0 12px;
-    margin: 4px 2px;
-    border-radius: 10px;
-    border: 1px solid rgba(167, 139, 250, 0.14);
-}
-
-#custom-launcher {
-    color: #A78BFA;
-    font-weight: bold;
+/* ── общий вид островов ── */
+#custom-logo, #workspaces, #custom-player, #clock, #sys, #io, #tray,
+#custom-notification, #custom-power {
+    background: rgba(14, 10, 36, 0.80);
+    border: 1px solid rgba(167, 139, 250, 0.22);
+    border-radius: 999px;
     padding: 0 14px;
+    margin: 0;
 }
 
-#workspaces {
-    padding: 0 4px;
-}
-
-#workspaces button {
-    padding: 0 8px;
-    margin: 2px 1px;
-    color: #9E94CD;
-    background: transparent;
-    border-radius: 9px;
-    transition: all 0.2s ease;
-}
-
-#workspaces button:hover {
-    background: rgba(167, 139, 250, 0.22);
-    color: #E5E7F5;
-}
-
-#workspaces button.active {
-    background: linear-gradient(135deg, #A78BFA, #82BFFF);
-    color: #0E0A24;
-    font-weight: bold;
-}
-
-#workspaces button.urgent {
-    background: #F27A9C;
-    color: #0E0A24;
-}
-
-#window {
-    color: #C4B8F5;
-}
-
-window#waybar.empty #window {
-    background: transparent;
-    border-color: transparent;
-    padding: 0;
-}
-
-#clock {
-    font-weight: bold;
+/* ── логотип ── */
+#custom-logo {
+    color: #D284E5;
+    font-weight: 800;
+    font-size: 15px;
     padding: 0 16px;
+    background: linear-gradient(135deg, rgba(52, 38, 118, 0.95), rgba(28, 17, 85, 0.90));
+    border-color: rgba(210, 132, 229, 0.45);
 }
+#custom-logo:hover { color: #E5E7F5; border-color: #D284E5; }
 
-#custom-notification {
-    color: #82BFFF;
-    padding: 0 12px;
+/* ── рабочие столы: точки, активный растягивается в «пилюлю» ── */
+#workspaces { padding: 0 8px; }
+#workspaces button {
+    min-width: 9px; min-height: 9px;
+    padding: 0; margin: 13px 4px;
+    border-radius: 999px;
+    background: rgba(158, 148, 205, 0.28);
+    color: transparent;
 }
+#workspaces button.empty    { background: rgba(158, 148, 205, 0.16); }
+#workspaces button.visible  { background: rgba(130, 191, 255, 0.55); }
+#workspaces button:hover    { background: rgba(196, 184, 245, 0.75); min-width: 14px; }
+#workspaces button.active {
+    min-width: 32px;
+    background: linear-gradient(90deg, #A78BFA, #82BFFF);
+}
+#workspaces button.urgent { background: #F27A9C; }
 
-#custom-notification:hover {
-    background: rgba(130, 191, 255, 0.20);
-}
+/* ── плеер появляется, когда что-то играет ── */
+#custom-player { color: #C4B8F5; }
+#custom-player.playing { color: #82BFFF; border-color: rgba(130, 191, 255, 0.40); }
+#custom-player.paused  { color: #9E94CD; }
+#custom-player:hover   { border-color: #82BFFF; }
 
-#language {
-    color: #A78BFA;
-    font-weight: bold;
+/* ── часы по центру ── */
+#clock {
+    padding: 0 20px;
+    font-size: 14px;
+    border-color: rgba(167, 139, 250, 0.38);
 }
+#clock:hover { border-color: #A78BFA; }
 
-#custom-power {
-    color: #F27A9C;
-    padding: 0 14px;
+/* ── системные метрики: внутри острова без своих рамок ── */
+#sys, #io { padding: 0 6px; }
+#custom-cpu, #custom-mem, #custom-gpu, #network, #pulseaudio, #language {
+    background: transparent; border: none; padding: 0 9px; margin: 0;
 }
+#custom-cpu { color: #A78BFA; }
+#custom-mem { color: #82BFFF; }
+#custom-gpu { color: #D284E5; }
+#custom-cpu.warn, #custom-mem.warn, #custom-gpu.warn { color: #F2D479; }
+#custom-cpu.crit, #custom-mem.crit, #custom-gpu.crit { color: #F27A9C; }
+#network       { color: #7FE0B0; }
+#network.disconnected { color: #F27A9C; }
+#pulseaudio    { color: #C4B8F5; }
+#pulseaudio.muted { color: #9E94CD; }
+#language      { color: #9E94CD; font-weight: 700; }
+#custom-cpu:hover, #custom-mem:hover, #custom-gpu:hover,
+#network:hover, #pulseaudio:hover, #language:hover { color: #E5E7F5; }
 
-#custom-power:hover {
-    background: rgba(242, 122, 156, 0.20);
-}
+#tray { padding: 0 12px; }
+#tray > .passive { -gtk-icon-effect: dim; }
+#tray > .needs-attention { -gtk-icon-effect: highlight; }
+
+/* ── уведомления и питание: круглые кнопки ── */
+#custom-notification, #custom-power { padding: 0; min-width: 36px; color: #C4B8F5; }
+#custom-notification:hover { color: #82BFFF; border-color: #82BFFF; }
+#custom-power { color: #F27A9C; }
+#custom-power:hover { background: rgba(242, 122, 156, 0.18); border-color: #F27A9C; }
 
 tooltip {
-    background: #14102F;
-    border: 1px solid #A78BFA;
-    border-radius: 10px;
+    background: rgba(14, 10, 36, 0.96);
+    border: 1px solid rgba(167, 139, 250, 0.40);
+    border-radius: 14px;
 }
-
-tooltip label {
-    color: #E5E7F5;
-}
+tooltip label { color: #E5E7F5; padding: 2px; }

@@ -9,12 +9,14 @@
 #   -y, --yes         не задавать вопросы, брать ответы по умолчанию
 #       --only=А,Б    выполнить только этапы: packages,dotfiles,theme,shell,vscode,wallpapers,verify
 #       --no-upgrade  не делать полное обновление системы (pacman -Syu)
+#       --in-session  разрешить запуск из графической сессии (по умолчанию — только из TTY)
+#       --reinstall   не предлагать обновление, если проект уже установлен
 #   -h, --help        справка
 # =============================================================================
 NL_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; export NL_ROOT
 set -uo pipefail
 
-DRY_RUN=0; ASSUME_YES=0; ONLY=""; NO_UPGRADE=0; UPDATE_MODE=0
+DRY_RUN=0; ASSUME_YES=0; ONLY=""; NO_UPGRADE=0; UPDATE_MODE=0; FAST=0; IN_SESSION_OK=0; REINSTALL=0
 
 usage() { sed -n '2,13p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
 
@@ -25,27 +27,43 @@ for a in "$@"; do
     --only=*) ONLY="${a#--only=}" ;;
     --no-upgrade) NO_UPGRADE=1 ;;
     --update) UPDATE_MODE=1 ;;            # служебный: вызывается из update.sh
+    --fast) FAST=1 ;;                     # служебный: обновление только конфигов/дизайна
+    --in-session) IN_SESSION_OK=1 ;;
+    --reinstall) REINSTALL=1 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Неизвестный параметр: $a (справка: bash install.sh --help)" >&2; exit 2 ;;
   esac
 done
-export DRY_RUN ASSUME_YES
+export DRY_RUN ASSUME_YES IN_SESSION_OK
 
 # shellcheck disable=SC1091
-for m in lib checks packages nvidia backup dotfiles shell vscode wallpapers verify; do . "$NL_ROOT/installer/$m.sh"; done
+for m in lib checks packages nvidia backup dotfiles shell vscode wallpapers widgets sddm verify; do . "$NL_ROOT/installer/$m.sh"; done
 trap nl_cleanup EXIT
 
 stage_on() { [ -z "$ONLY" ] || [[ ",$ONLY," == *",$1,"* ]]; }
-if [ "$UPDATE_MODE" = 1 ] && [ -z "$ONLY" ]; then ONLY="packages,dotfiles,theme,vscode,wallpapers,verify"; fi
+if [ "$UPDATE_MODE" = 1 ] && [ -z "$ONLY" ]; then
+  if [ "$FAST" = 1 ]; then ONLY="dotfiles,theme,widgets,vscode,wallpapers,sddm,verify"
+  else ONLY="packages,dotfiles,theme,widgets,vscode,wallpapers,sddm,verify"; fi
+fi
 
 nl_log_init install
 banner
 choices_load
 IN_HYPRLAND=0
 
+# Уже установлено → не переустанавливаем, а предлагаем обновление
+if [ "$UPDATE_MODE" != 1 ] && [ "$REINSTALL" != 1 ] && [ "$DRY_RUN" != 1 ] && [ -s "$NL_MANIFEST" ]; then
+  info "Northling Arch уже установлен. Для этого есть обновление — переустанавливать с нуля не нужно."
+  if ask "Запустить обновление вместо переустановки?" y; then
+    a=(); [ "$ASSUME_YES" = 1 ] && a+=(--yes); [ "$IN_SESSION_OK" = 1 ] && a+=(--in-session)
+    exec bash "$NL_ROOT/update.sh" "${a[@]}"
+  fi
+fi
+
 # ── 1. Проверка системы ─────────────────────────────────────────────────────
 step 1 "Проверка системы"
 run_checks
+[ "$FAST" = 1 ] || [ "$DRY_RUN" = 1 ] || guard_session
 
 # ── 2. Проверка пакетов и выбор компонентов ─────────────────────────────────
 step 2 "Проверка прав и доступности пакетов"
@@ -56,6 +74,8 @@ if [ "$UPDATE_MODE" != 1 ]; then
   ask "Официальный Visual Studio Code (из AUR) и тема Northling Midnight?" y && WITH_VSCODE=1 || WITH_VSCODE=0
   ask "Zsh + Oh My Zsh + Powerlevel10k и терминальные утилиты (fzf, zoxide, eza, bat, ripgrep, btop, fastfetch)?" y && WITH_ZSH=1 || WITH_ZSH=0
   ask "Docker?" n && WITH_DOCKER=1 || WITH_DOCKER=0
+  ask "Виджеты рабочего стола (часы, календарь, погода, плеер, нагрузка, сеть)?" y && WITH_WIDGETS=1 || WITH_WIDGETS=0
+  ask "Тема экрана входа SDDM «Northling Midnight»? (включение спросим отдельно, с проверкой)" y && WITH_SDDM=1 || WITH_SDDM=0
 fi
 pkg_classify
 pkg_report
@@ -73,7 +93,7 @@ if [ "$UPDATE_MODE" != 1 ]; then
     [ "$NO_UPGRADE" = 1 ] || info "Полное обновление системы (sudo pacman -Syu) — обязательно перед установкой пакетов в Arch"
     info "Установка пакетов: ${#P_NEW[@]} новых (уже стоит: ${#P_HAVE[@]})"
   }
-  [ "$WITH_VSCODE" = 1 ] && info "VS Code: AUR-пакет visual-studio-code-bin через paru (от твоего пользователя)"
+  [ "$WITH_VSCODE" = 1 ] && info "VS Code: официальный (AUR visual-studio-code-bin) или Code - OSS из репозитория — спрошу на своём этапе"
   stage_on dotfiles && info "Конфиги: Hyprland (Lua), Waybar, Rofi, Kitty, SwayNC, Hyprlock/Hypridle, GTK/Qt, fastfetch, команда northling"
   [ "$WITH_ZSH" = 1 ] && info "Zsh: Oh My Zsh и Powerlevel10k в твой домашний каталог, тема Northling Midnight"
   info "Обои: 3 стандартных + 2 фурри → ~/Pictures/Wallpapers/Northling (твои файлы не перезаписываются)"
@@ -117,10 +137,11 @@ if stage_on theme; then
   theme_apply
   ok "Тема применена (палитра: ~/.config/northling/colors.env)"
 fi
+if stage_on sddm; then sddm_install; fi
 
 # ── 8. Виджеты ──────────────────────────────────────────────────────────────
 step 8 "Виджеты рабочего стола"
-info "Часы, календарь, погода, плеер и т.д. — отдельный этап v0.2. Сейчас: Waybar + центр уведомлений SwayNC."
+if stage_on widgets; then widgets_install; fi
 
 # ── 9–11. Zsh, VS Code, обои ────────────────────────────────────────────────
 if stage_on shell;      then step 9  "Настройка Zsh";       shell_install; fi
@@ -141,6 +162,7 @@ if stage_on verify; then
     run hyprctl reload
     restart_bg swaync swaync
     restart_bg waybar waybar
+    [ "${WITH_WIDGETS:-1}" = 1 ] && [ -x "$HOME/.local/bin/northling-widgets" ] && { [ "$DRY_RUN" = 1 ] || "$HOME/.local/bin/northling-widgets" restart >/dev/null 2>&1; }
     [ -e "$WALL_LINK" ] && restart_bg swaybg swaybg -i "$WALL_LINK" -m fill
     restart_bg hypridle hypridle
     if [ "$DRY_RUN" != 1 ]; then
@@ -174,7 +196,7 @@ else
   say ""
   say "${C_B}Если что-то пошло не так${C_RESET}"
   say "  • Проверка:            northling doctor    (или Super+R → «Northling: проверка»)"
-  say "  • Обновление:          northling update    (или Super+R → «Northling: обновить»)"
+  say "  • Обновление дизайна:  northling update    (быстро и безопасно; пакеты и система — northling update --full из TTY)"
   say "  • Сменить обои:        northling wallpaper (или Super+R → «Northling: обои»)"
   say "  • Откат всего:         bash $(tilde "$NL_ROOT")/uninstall.sh   (вернёт твои прежние файлы из бэкапа)"
   say "  • Бэкапы лежат тут:    ~/.local/share/northling/backups/"

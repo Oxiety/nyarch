@@ -1,0 +1,4 @@
+# Виджеты рабочего стола: GTK3 + layer-shell
+python-gobject
+gtk3
+gtk-layer-shell

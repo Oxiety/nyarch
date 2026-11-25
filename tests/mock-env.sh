@@ -6,11 +6,11 @@ mock_setup() {
   T="${NL_TEST_DIR:-/tmp/nl-mock}"; rm -rf "$T"; mkdir -p "$T/bin" "$T/home" "$T/fake"
   export HOME="$T/home" XDG_CONFIG_HOME="" XDG_DATA_HOME="" XDG_STATE_HOME="" FAKE="$T/fake"
   unset XDG_CONFIG_HOME XDG_DATA_HOME XDG_STATE_HOME HYPRLAND_INSTANCE_SIGNATURE
-  export NL_ALLOW_NONARCH=1 NL_ALLOW_ROOT=1 NO_COLOR=1 PATH="$T/bin:$PATH" NL_FORCE_NVIDIA="${NL_FORCE_NVIDIA:-1}"
+  export NL_SDDM_THEMES="$T/sddm/themes" NL_SDDM_CONFD="$T/sddm/conf.d" NL_ALLOW_NONARCH=1 NL_ALLOW_ROOT=1 NO_COLOR=1 PATH="$T/bin:$PATH" NL_FORCE_NVIDIA="${NL_FORCE_NVIDIA:-1}"
   : > "$FAKE/installed"
   # «репозиторий»: всё, кроме двух пакетов (проверяем ветку «нет в репо»)
   ( cd "$(dirname "${BASH_SOURCE[0]}")/../packages" && cat *.txt ) | sed -e 's/#.*//' -e 's/nv://' | tr -s ' \t|' '\n' | grep -v '^$' \
-    | grep -vx -e nm-connection-editor -e rofi-wayland > "$FAKE/repo"
+    | grep -vx -e gtk-layer-shell -e rofi-wayland > "$FAKE/repo"
   cat > "$T/bin/pacman" <<'P'
 #!/usr/bin/env bash
 state="$FAKE/installed"; repo="$FAKE/repo"
@@ -32,7 +32,7 @@ P
   cat > "$T/bin/paru" <<'P'
 #!/usr/bin/env bash
 if [ "$1" = -S ]; then for a in "$@"; do case "$a" in -*) ;; *) echo "$a" >> "$FAKE/installed"; echo "[mock paru] $a";
-  [ "$a" = code ] && printf '#!/bin/sh\necho 1.99.0\n' > "$FAKE/../bin/code" && chmod +x "$FAKE/../bin/code" ;; esac; done; fi
+  { [ "$a" = code ] || [ "$a" = visual-studio-code-bin ]; } && printf '#!/bin/sh\necho 1.99.0\n' > "$FAKE/../bin/code" && chmod +x "$FAKE/../bin/code" ;; esac; done; fi
 exit 0
 P
   cat > "$T/bin/git" <<'P'

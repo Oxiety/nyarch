@@ -31,6 +31,14 @@ nl_verify() {
   say "${C_B}Конфиги${C_RESET}"
   for c in hypr/hyprland.lua hypr/hyprlock.conf hypr/hypridle.conf waybar/config.jsonc waybar/style.css \
            rofi/config.rasi rofi/northling.rasi kitty/kitty.conf swaync/config.json swaync/style.css; do v_file "$XDG_CONFIG/$c"; done
+  if [ "${WITH_WIDGETS:-1}" = 1 ]; then
+    v_file "$HOME/.local/share/northling/widgets/northling_widgets.py"; v_file "$XDG_CONFIG/northling/widgets.json"; v_json "$XDG_CONFIG/northling/widgets.json"
+    python3 -c "import gi; gi.require_version('GtkLayerShell','0.1')" >/dev/null 2>&1 && vok "виджеты: python-gobject и gtk-layer-shell на месте" \
+      || vwarn "виджетам не хватает python-gobject / gtk-layer-shell → northling update --full (из TTY)"
+  fi
+  if [ "${WITH_SDDM:-1}" = 1 ] && [ -d "${NL_SDDM_THEMES:-/usr/share/sddm/themes}/northling-midnight" ]; then
+    if [ -f "${NL_SDDM_CONFD:-/etc/sddm.conf.d}/10-northling-theme.conf" ]; then vok "тема SDDM установлена и включена"; else vwarn "тема SDDM установлена, но не включена: northling sddm test → northling sddm enable"; fi
+  fi
   v_json "$XDG_CONFIG/waybar/config.jsonc"
   v_json "$XDG_CONFIG/swaync/config.json"
   for c in "$HOME"/.local/bin/northling*; do [ -f "$c" ] && { bash -n "$c" 2>/dev/null && vok "скрипт без синтаксических ошибок: $(basename "$c")" || vbad "ошибка синтаксиса в $(basename "$c")"; }; done
@@ -57,7 +65,8 @@ nl_verify() {
       vok "Hyprland: ошибок конфигурации нет"
     fi
     local mon; mon="$(hyprctl monitors 2>/dev/null | grep -E '^\s*[0-9]+x[0-9]+@' | head -n1 | sed 's/^[[:space:]]*//')"
-    [ -n "$mon" ] && { case "$mon" in 1920x1080@1[12]*) vok "монитор: $mon" ;; *) vwarn "монитор работает как «$mon», ожидалось 1920x1080@120 (кабель/порт?)" ;; esac; }
+    [ -n "$mon" ] && { case "$mon" in 1920x1080@1[12]*) vok "монитор: $mon" ;; 1920x1080@*) vwarn "монитор работает как «$mon» (режим «preferred»). Если нужны 120 Гц — посмотри hyprctl monitors и впиши режим в hyprland.lua" ;; *) vwarn "монитор работает как «$mon», ожидалось 1920x1080" ;; esac; }
+    [ "${WITH_WIDGETS:-1}" = 1 ] && { pgrep -f northling_widgets.py >/dev/null && vok "запущены виджеты" || vwarn "виджеты не запущены: northling widgets restart (лог: northling widgets status)"; }
     for c in waybar swaync swaybg hypridle; do pgrep -x "$c" >/dev/null && vok "запущен: $c" || vwarn "не запущен: $c"; done
     pgrep -x mako >/dev/null && vwarn "работает старый mako — он конфликтует с swaync за уведомления; закрой: pkill mako"
   fi

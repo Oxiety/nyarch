@@ -9,9 +9,16 @@ vscode_install() {
   [ "${WITH_VSCODE:-1}" = 1 ] || { info "VS Code пропущен по твоему выбору"; return 0; }
 
   if have code; then ok_dim "VS Code уже установлен: $(code --version 2>/dev/null | head -n1)"
+  elif [ "${FAST:-0}" = 1 ]; then warn "VS Code не установлен; пакеты ставит полное обновление:  northling update --full"
   else
-    info "Официальный VS Code есть только в AUR (пакет visual-studio-code-bin)."
-    pkg_install code || warn "VS Code не установлен — настройки всё равно положу, они подхватятся позже."
+    choose "Какой VS Code ставим?" 1 \
+      "Официальный Microsoft VS Code (AUR: visual-studio-code-bin) — как в ТЗ, свой маркетплейс" \
+      "Code - OSS из репозитория Arch (пакет code) — быстрее, но это НЕ официальная сборка"
+    if [ "$CHOICE" = 2 ]; then
+      run sudo pacman -S --needed $(pkg_noconfirm) code || warn "VS Code не установлен — настройки всё равно положу, они подхватятся позже."
+    else
+      aur_install visual-studio-code-bin || warn "VS Code не установлен — настройки всё равно положу, они подхватятся позже."
+    fi
   fi
 
   # настройки редактора: «твой» файл — первый раз кладём (со старым в бэкап), дальше не перезаписываем

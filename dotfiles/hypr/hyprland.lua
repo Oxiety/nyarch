@@ -51,7 +51,7 @@ hl.config({
         gaps_out = 12,
         border_size = 2,
         col = {
-            active_border   = { colors = {"rgba(a78bfaee)", "rgba(82bfffee)"}, angle = 45 },
+            active_border   = { colors = {"rgba(a78bfaee)", "rgba(82bfffee)", "rgba(d284e5ee)", "rgba(a78bfaee)"}, angle = 45 },
             inactive_border = "rgba(34304faa)",
         },
         resize_on_border = false,
@@ -60,7 +60,7 @@ hl.config({
     },
 
     decoration = {
-        rounding       = 14,
+        rounding       = 16,
         rounding_power = 2,
         active_opacity   = 1.0,
         inactive_opacity = 0.94,
@@ -72,9 +72,10 @@ hl.config({
         },
         blur = {
             enabled   = true,
-            size      = 6,
-            passes    = 2,
-            vibrancy  = 0.1696,
+            size      = 8,
+            passes    = 3,
+            vibrancy  = 0.2,
+            noise     = 0.015,
         },
     },
 
@@ -104,12 +105,19 @@ hl.config({
     },
 })
 
--- Плавные, но спокойные анимации (hl.curve / hl.animation — по официальной вики)
-hl.curve("northlingOut", { type = "bezier", points = { {0.23, 1}, {0.32, 1} } })
-hl.animation({ leaf = "windows",    enabled = true, speed = 4.5, bezier = "northlingOut" })
-hl.animation({ leaf = "fade",       enabled = true, speed = 3.0, bezier = "northlingOut" })
-hl.animation({ leaf = "layers",     enabled = true, speed = 4.0, bezier = "northlingOut" })
-hl.animation({ leaf = "workspaces", enabled = true, speed = 4.0, bezier = "northlingOut", style = "slide" })
+-- Анимации Northling: мягкое «пружинистое» появление окон, скольжение столов, вращающаяся рамка.
+-- Кривые: silk — резкий старт и долгое плавное затухание, spring — лёгкий перелёт.
+hl.curve("silk",   { type = "bezier", points = { {0.16, 1.00}, {0.30, 1.00} } })
+hl.curve("spring", { type = "bezier", points = { {0.34, 1.35}, {0.64, 1.00} } })
+hl.curve("linear", { type = "bezier", points = { {0.00, 0.00}, {1.00, 1.00} } })
+hl.animation({ leaf = "windowsIn",    enabled = true, speed = 5.5, bezier = "spring", style = "popin 80%" })
+hl.animation({ leaf = "windowsOut",   enabled = true, speed = 4.0, bezier = "silk",   style = "popin 86%" })
+hl.animation({ leaf = "windowsMove",  enabled = true, speed = 4.5, bezier = "silk" })
+hl.animation({ leaf = "fade",         enabled = true, speed = 3.5, bezier = "silk" })
+hl.animation({ leaf = "border",       enabled = true, speed = 6.0, bezier = "silk" })
+hl.animation({ leaf = "borderangle",  enabled = true, speed = 60,  bezier = "linear", style = "loop" })
+hl.animation({ leaf = "layers",       enabled = true, speed = 4.5, bezier = "spring", style = "popin 90%" })
+hl.animation({ leaf = "workspaces",   enabled = true, speed = 5.0, bezier = "silk",   style = "slidefade 18%" })
 
 -- ── F. Горячие клавиши ───────────────────────────────────────────────────────
 hl.bind(mainMod .. " + Q", hl.dsp.exec_cmd(terminal))                  -- терминал
@@ -196,6 +204,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("swaybg -i " .. HOME .. "/.config/northling/wallpaper -m fill")
     hl.exec_cmd("swaync")
     hl.exec_cmd("waybar")
+    hl.exec_cmd(HOME .. "/.local/bin/northling-widgets start")
     hl.exec_cmd("hypridle")
     hl.exec_cmd("nm-applet --indicator")
     hl.exec_cmd("wl-paste --type text  --watch cliphist store")

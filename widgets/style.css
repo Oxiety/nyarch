@@ -1,0 +1,48 @@
+/* Northling Midnight — виджеты рабочего стола */
+window { background: transparent; }
+* { font-family: "JetBrainsMono Nerd Font", "Noto Sans", sans-serif; color: #E5E7F5; }
+
+.card {
+    background: rgba(14, 10, 36, 0.74);
+    border: 1px solid rgba(167, 139, 250, 0.26);
+    border-radius: 22px;
+    padding: 16px 20px;
+}
+.hero { background: linear-gradient(145deg, rgba(52, 38, 118, 0.80), rgba(14, 10, 36, 0.78)); border-color: rgba(210, 132, 229, 0.36); }
+.clock-time { font-size: 76px; font-weight: 800; color: #E5E7F5; }
+.clock-day  { font-size: 20px; font-weight: 700; color: #A78BFA; }
+.clock-date { font-size: 14px; color: #9E94CD; }
+
+.card-title { font-size: 11px; font-weight: 700; color: #9E94CD; letter-spacing: 2px; margin-bottom: 4px; }
+
+.w-place { font-size: 12px; font-weight: 700; color: #9E94CD; letter-spacing: 1px; }
+.w-icon  { font-size: 40px; color: #F2D479; }
+.w-temp  { font-size: 44px; font-weight: 800; }
+.w-text  { font-size: 15px; color: #C4B8F5; }
+.w-extra { font-size: 12px; color: #9E94CD; }
+
+.metric-name { font-size: 12px; font-weight: 700; color: #9E94CD; }
+.metric-val  { font-size: 12px; }
+progressbar trough { min-height: 8px; border-radius: 999px; background: rgba(158, 148, 205, 0.18); border: none; }
+progressbar progress { min-height: 8px; border-radius: 999px; border: none; background: #A78BFA; }
+progressbar.b-cpu progress { background: linear-gradient(90deg, #A78BFA, #C4B8F5); }
+progressbar.b-mem progress { background: linear-gradient(90deg, #82BFFF, #A78BFA); }
+progressbar.b-gpu progress { background: linear-gradient(90deg, #D284E5, #A78BFA); }
+progressbar.b-player progress { background: linear-gradient(90deg, #82BFFF, #D284E5); }
+progressbar.warn progress { background: #F2D479; }
+progressbar.crit progress { background: #F27A9C; }
+.net { font-size: 13px; color: #7FE0B0; margin-top: 6px; }
+.net-rate { font-size: 12px; color: #9E94CD; }
+
+.p-title  { font-size: 15px; font-weight: 700; }
+.p-artist { font-size: 12px; color: #9E94CD; margin-bottom: 4px; }
+button.pbtn {
+    background: rgba(167, 139, 250, 0.16); border: 1px solid rgba(167, 139, 250, 0.30);
+    border-radius: 999px; padding: 4px 16px; box-shadow: none; text-shadow: none;
+}
+button.pbtn:hover { background: rgba(167, 139, 250, 0.34); }
+
+calendar { background: transparent; border: none; color: #E5E7F5; padding: 0; }
+calendar.header { color: #A78BFA; font-weight: 700; }
+calendar:selected { background: linear-gradient(135deg, #A78BFA, #82BFFF); color: #0E0A24; border-radius: 999px; }
+calendar:indeterminate { color: #55507A; }

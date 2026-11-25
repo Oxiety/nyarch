@@ -29,7 +29,11 @@ for f in "$R"/install.sh "$R"/update.sh "$R"/uninstall.sh "$R"/installer/*.sh "$
   t "bash -n $(basename "$f")" "bash -n '$f'"
 done
 if command -v shellcheck >/dev/null; then t "shellcheck (ошибки)" "shellcheck -S error -x '$R'/install.sh '$R'/update.sh '$R'/uninstall.sh '$R'/installer/*.sh"; fi
-for f in "$R"/dotfiles/waybar/config.jsonc "$R"/dotfiles/swaync/config.json "$R"/dotfiles/vscode/settings.json "$R"/themes/vscode/northling-midnight/package.json "$R"/themes/vscode/northling-midnight/themes/*.json; do
+t "UI виджетов (дымовой тест)" "python3 -I '$R/tests/test_widgets_ui.py' >/dev/null"
+t "модуль данных виджетов компилируется" "python3 -c \"import py_compile;py_compile.compile('$R/widgets/nl_data.py',doraise=True,cfile='/tmp/x.pyc')\""
+t "SDDM metadata.desktop содержит MainScript" "grep -q '^MainScript=Main.qml' '$R/themes/sddm/northling-midnight/metadata.desktop'"
+t ".vsix собран и содержит тему" "python3 -c \"import zipfile,glob;z=zipfile.ZipFile(glob.glob('$R/themes/vscode/dist/*.vsix')[0]);assert 'extension/package.json' in z.namelist()\""
+for f in "$R"/dotfiles/waybar/config.jsonc "$R"/widgets/widgets.json "$R"/dotfiles/swaync/config.json "$R"/dotfiles/vscode/settings.json "$R"/themes/vscode/northling-midnight/package.json "$R"/themes/vscode/northling-midnight/themes/*.json; do
   t "JSON $(basename "$f")" "python3 -c \"import json,sys;json.load(open(sys.argv[1]))\" '$f'"
 done
 
@@ -50,8 +54,12 @@ t "новые пакеты установлены" "grep -qx hyprland '$FAKE/ins
 t "nv-пакет libva-nvidia-driver поставлен (GPU=1)" "grep -qx libva-nvidia-driver '$FAKE/installed'"
 t "драйвер nvidia НЕ ставился/не трогался" "! grep -qE '^nvidia' '$FAKE/installed'"
 t "Bluetooth не ставился" "! grep -qiE 'bluez|blueman' '$FAKE/installed'"
-t "пакет без репо (nm-connection-editor) пропущен с предупреждением" "grep -q 'nm-connection-editor' '$T/i1.log' && ! grep -qx nm-connection-editor '$FAKE/installed'"
-t "VS Code ставился через paru" "grep -qx code '$FAKE/installed'"
+t "пакет без репо (gtk-layer-shell) пропущен с предупреждением" "grep -q 'gtk-layer-shell' '$T/i1.log' && ! grep -qx gtk-layer-shell '$FAKE/installed'"
+t "виджеты установлены" "[ -s '$HOME/.local/share/northling/widgets/northling_widgets.py' ] && [ -s '$HOME/.local/share/northling/widgets/nl_data.py' ] && [ -s '$HOME/.config/northling/widgets.json' ] && [ -x '$HOME/.local/bin/northling-widgets' ]"
+t "тема SDDM лежит в (мок-)каталоге тем" "[ -s '$T/sddm/themes/northling-midnight/Main.qml' ] && [ -s '$T/sddm/themes/northling-midnight/metadata.desktop' ]"
+t "тема SDDM по умолчанию НЕ включена без проверки" "[ ! -e '$T/sddm/conf.d/10-northling-theme.conf' ]"
+t "автозапуск виджетов прописан в hyprland.lua" "grep -q 'northling-widgets start' '$HOME/.config/hypr/hyprland.lua'"
+t "VS Code (официальный) ставился через paru" "grep -qx visual-studio-code-bin '$FAKE/installed'"
 for f in .config/hypr/hyprland.lua .config/hypr/hyprlock.conf .config/hypr/hypridle.conf .config/waybar/config.jsonc .config/waybar/style.css .config/waybar/scripts/gpu.sh \
          .config/rofi/config.rasi .config/rofi/northling.rasi .config/kitty/kitty.conf .config/swaync/config.json .config/swaync/style.css .config/kdeglobals \
          .config/fastfetch/config.jsonc .config/gtk-3.0/settings.ini .zshrc .p10k.zsh .config/Code/User/settings.json .local/bin/northling .local/bin/northling-wallpaper \
@@ -74,7 +82,7 @@ t "install.sh НЕ трогал обои в манифесте" "! grep -q Wallp
 echo "== 3. Повторный запуск (идемпотентность)"
 nb_before="$(find "$HOME/.local/share/northling/backups" -type f | wc -l)"; snap_before="$(snap | grep -v '/logs\|\.log$')"
 : > "$FAKE/installed.keep"; cp "$FAKE/installed" "$FAKE/installed.keep"
-bash "$R/install.sh" --yes >"$T/i2.log" 2>&1; rc=$?
+bash "$R/install.sh" --yes --reinstall >"$T/i2.log" 2>&1; rc=$?
 t "повторная установка: код 0" "[ $rc -eq 0 ]"
 t "повтор: новых бэкапов не появилось" "[ \$(find '$HOME/.local/share/northling/backups' -type f | wc -l) -eq $nb_before ]"
 t "повтор: файлы без изменений" "grep -q 'создано 0, обновлено 0' '$T/i2.log'"
@@ -83,7 +91,7 @@ t "повтор: пакеты не переустанавливаются" "[ \$
 echo "== 4. Мои правки: seed не трогаем, own — заменяем с бэкапом"
 echo "# my own alias line" >> "$HOME/.zshrc"
 echo "-- user tweak --" >> "$HOME/.config/hypr/hyprland.lua"
-bash "$R/install.sh" --yes >"$T/i3.log" 2>&1
+bash "$R/install.sh" --yes --reinstall >"$T/i3.log" 2>&1
 t ".zshrc с моими правками не перезаписан" "grep -q 'my own alias line' '$HOME/.zshrc'"
 t "об этом предупреждено" "grep -q 'ты менял этот файл сам' '$T/i3.log'"
 t "hyprland.lua (own) заменён на версию проекта" "! grep -q 'user tweak' '$HOME/.config/hypr/hyprland.lua'"
@@ -119,13 +127,28 @@ t "документы целы" "grep -q doc '$HOME/Documents/a.txt'"
 t "обои не удалены" "[ -s '$HOME/Pictures/Wallpapers/Northling/furry/01-leopard-night.png' ]"
 t "манифест без удалённых файлов" "! grep -q waybar '$HOME/.local/share/northling/manifest.tsv'"
 
+echo "== 7b. Защита: установка из графической сессии"
+mock_setup
+HYPRLAND_INSTANCE_SIGNATURE=mock bash "$R/install.sh" --yes >"$T/g1.log" 2>&1; rc=$?
+t "из графической сессии установка отказывается (код != 0)" "[ $rc -ne 0 ]"
+t "объясняет, как сделать из TTY" "grep -q 'Ctrl+Alt+F3' '$T/g1.log'"
+t "ничего не поставила" "[ ! -s '$FAKE/installed' ]"
+HYPRLAND_INSTANCE_SIGNATURE=mock bash "$R/install.sh" --yes --in-session >"$T/g2.log" 2>&1; rc=$?
+t "с --in-session работает" "[ $rc -eq 0 ] && [ -s '$HOME/.config/hypr/hyprland.lua' ]"
+bash "$R/install.sh" --yes >"$T/g3.log" 2>&1
+t "повторная install.sh на установленной системе предлагает/запускает обновление" "grep -q 'уже установлен' '$T/g3.log' && grep -q 'Обновление Northling Arch' '$T/g3.log'"
+bash "$R/update.sh" --yes --fast --no-pull >"$T/g4.log" 2>&1; rc=$?
+t "быстрое обновление: код 0, система не обновлялась" "[ $rc -eq 0 ] && ! grep -q 'system upgraded' '$T/g4.log'"
+bash "$R/update.sh" --yes --full --no-pull --in-session >"$T/g5.log" 2>&1; rc=$?
+t "полное обновление обновляет систему" "[ $rc -eq 0 ] && grep -q 'Обновление системы' '$T/g5.log' && ! grep -q 'Пропущено (быстрый режим)' '$T/g5.log'"
+
 echo "== 8. update.sh (пробный)"
 mock_setup
 bash "$R/install.sh" --yes >/dev/null 2>&1
-bash "$R/update.sh" --dry-run --yes >"$T/up.log" 2>&1; rc=$?
+bash "$R/update.sh" --dry-run --yes --no-pull >"$T/up.log" 2>&1; rc=$?
 t "update --dry-run: код 0" "[ $rc -eq 0 ]"
 t "update: показан снимок и обновление конфигов" "grep -q 'Снимок' '$T/up.log' && grep -q 'Обновление конфигов проекта' '$T/up.log'"
-bash "$R/update.sh" --yes >"$T/up2.log" 2>&1; rc=$?
+bash "$R/update.sh" --yes --no-pull >"$T/up2.log" 2>&1; rc=$?
 t "update (реальный на моках): код 0" "[ $rc -eq 0 ]"
 t "update: снимок-архив создан" "ls '$HOME/.local/share/northling/backups'/pre-update-*.tar.gz >/dev/null 2>&1"
 

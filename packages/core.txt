@@ -18,7 +18,6 @@ wireplumber
 pavucontrol
 networkmanager
 network-manager-applet
-nm-connection-editor
 
 # --- Панель, уведомления, лаунчер, обои ---
 waybar

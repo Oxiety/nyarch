@@ -1,0 +1,8 @@
+{
+  "clock":    { "enabled": true, "hour24": true },
+  "calendar": { "enabled": true },
+  "system":   { "enabled": true },
+  "weather":  { "enabled": true, "city": "", "latitude": null, "longitude": null, "units": "metric" },
+  "player":   { "enabled": true },
+  "layout":   { "top": 64, "side": 24, "width": 340 }
+}

@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# Управление виджетами рабочего стола:  northling-widgets start|stop|restart|status|config
+D="$HOME/.local/share/northling/widgets"
+CONF="$HOME/.config/northling/widgets.json"
+start() {
+  pgrep -f "northling_widgets.py" >/dev/null && { echo "виджеты уже запущены"; return 0; }
+  [ -f "$D/northling_widgets.py" ] || { echo "виджеты не установлены (northling update)"; return 1; }
+  python3 -c "import gi; gi.require_version('GtkLayerShell','0.1')" 2>/dev/null \
+    || { echo "нет python-gobject / gtk-layer-shell: northling update --full (из TTY)"; return 1; }
+  # gtk-layer-shell нужно загрузить до libwayland-client, иначе окно не станет layer-поверхностью
+  local pre=""; for l in /usr/lib/libgtk-layer-shell.so /usr/lib64/libgtk-layer-shell.so /usr/lib/x86_64-linux-gnu/libgtk-layer-shell.so; do [ -e "$l" ] && { pre="$l"; break; }; done
+  LD_PRELOAD="$pre${LD_PRELOAD:+:$LD_PRELOAD}" setsid -f python3 "$D/northling_widgets.py" >"${XDG_RUNTIME_DIR:-/tmp}/northling-widgets.log" 2>&1 </dev/null
+}
+case "${1:-start}" in
+  start) start ;;
+  stop) pkill -f northling_widgets.py ;;
+  restart) pkill -f northling_widgets.py; sleep 0.4; start ;;
+  status) pgrep -f northling_widgets.py >/dev/null && echo "запущены" || echo "не запущены"; tail -n 5 "${XDG_RUNTIME_DIR:-/tmp}/northling-widgets.log" 2>/dev/null ;;
+  config)
+    [ -f "$CONF" ] || { echo "нет конфига — запусти northling update"; exit 1; }
+    for e in "${VISUAL:-}" "${EDITOR:-}" code nano; do [ -n "$e" ] && command -v "$e" >/dev/null && { "$e" "$CONF"; "$0" restart; exit 0; }; done
+    echo "Открой файл любым редактором: $CONF" ;;
+  *) echo "использование: northling-widgets start|stop|restart|status|config"; exit 2 ;;
+esac

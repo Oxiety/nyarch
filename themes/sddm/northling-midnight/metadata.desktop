@@ -1,0 +1,13 @@
+[SddmGreeterTheme]
+Name=Northling Midnight
+Description=Тёмная индиго-лавандовая тема входа Northling Arch
+Author=Northling
+Version=0.1.0
+Website=https://northling.space
+License=MIT
+Type=sddm-theme
+MainScript=Main.qml
+ConfigFile=theme.conf
+Theme-Id=northling-midnight
+Theme-API=2.0
+QtVersion=6

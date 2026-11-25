@@ -1,9 +1,16 @@
 # Changelog
 
+## 0.1.0-beta.2
+- Новый верхний бар «Острова» (Waybar): стеклянные блоки, точки-пилюли рабочих столов, метрики CPU/RAM/GPU, плеер
+- Виджеты рабочего стола (GTK3 + layer-shell): часы, календарь, погода по городу из конфига, система, сеть, плеер
+- Тема экрана входа SDDM; включается только после тестового запуска; откат из TTY
+- Быстрое обновление `northling update` (без пакетов) и полное `--full`; `install.sh` на установленной системе предлагает обновление
+- Защита: установка/полное обновление из графической сессии блокируются (гасили монитор) — только TTY или `--in-session`
+- Тема Powerlevel10k пользователя (Light Segments) как основная
+- Анимации Hyprland: пружинное появление окон, slidefade столов, вращающаяся рамка
+- VS Code: `.vsix` и `install-windows.ps1`; выбор «официальный (AUR) / Code - OSS»
+- NVIDIA-аудит: GBM, Vulkan, VA-API, версии Hyprland/драйвера (только чтение)
+- Монитор по умолчанию `preferred` (исправление пользователя); `NVD_BACKEND` отключён (исправление пользователя)
+
 ## 0.1.0-beta.1
-- Интерактивный установщик (`install.sh`), обновление (`update.sh`), удаление (`uninstall.sh`)
-- Манифест с sha256, бэкапы, откат сломанного `hyprland.lua`, `--dry-run`
-- Hyprland (Lua), Hyprlock/Hypridle, Waybar, SwayNC, Rofi, Kitty, Zsh+p10k, fastfetch
-- Тема Northling Midnight (GTK/Qt/VS Code), официальный VS Code из AUR
-- Команда `northling` и .desktop-ярлыки; диагностика `northling diag`
-- Не реализовано: виджеты рабочего стола, тема SDDM (v0.2)
+- Интерактивный установщик, update/uninstall, манифест и бэкапы, Hyprland (Lua), Waybar, SwayNC, Rofi, Kitty, Zsh+p10k, тема VS Code

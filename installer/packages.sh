@@ -28,6 +28,8 @@ pkg_lists() {
   [ "${WITH_ZSH:-1}"    = 1 ] && echo "$NL_ROOT/packages/shell.txt"
   [ "${WITH_DEV:-1}"    = 1 ] && echo "$NL_ROOT/packages/development.txt"
   [ "${WITH_DOCKER:-0}" = 1 ] && echo "$NL_ROOT/packages/optional.txt"
+  [ "${WITH_WIDGETS:-1}" = 1 ] && echo "$NL_ROOT/packages/widgets.txt"
+  [ "${WITH_SDDM:-1}"    = 1 ] && echo "$NL_ROOT/packages/sddm.txt"
   return 0
 }
 

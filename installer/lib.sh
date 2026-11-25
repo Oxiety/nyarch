@@ -123,6 +123,7 @@ choices_save() {
     echo "# Выбор, сделанный при установке Northling Arch (используется update.sh)"
     echo "WITH_DEV=$WITH_DEV"; echo "WITH_VSCODE=$WITH_VSCODE"
     echo "WITH_ZSH=$WITH_ZSH"; echo "WITH_DOCKER=$WITH_DOCKER"
+    echo "WITH_WIDGETS=$WITH_WIDGETS"; echo "WITH_SDDM=$WITH_SDDM"
   } > "$NL_CHOICES"
 }
 choices_load() {
@@ -130,4 +131,5 @@ choices_load() {
   [ -f "$NL_CHOICES" ] && . "$NL_CHOICES"
   WITH_DEV="${WITH_DEV:-1}"; WITH_VSCODE="${WITH_VSCODE:-1}"
   WITH_ZSH="${WITH_ZSH:-1}"; WITH_DOCKER="${WITH_DOCKER:-0}"
+  WITH_WIDGETS="${WITH_WIDGETS:-1}"; WITH_SDDM="${WITH_SDDM:-1}"
 }

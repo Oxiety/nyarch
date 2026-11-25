@@ -81,6 +81,10 @@ if [ "$DRY_RUN" != 1 ]; then
   rmdir "$NL_CONF" 2>/dev/null || true
 fi
 
+[ "$DRY_RUN" = 1 ] || pkill -f northling_widgets.py 2>/dev/null || true
+# shellcheck disable=SC1091
+. "$NL_ROOT/installer/sddm.sh"; sddm_remove
+
 if [ -d "$HOME/.oh-my-zsh" ] && ask "Удалить также Oh My Zsh и Powerlevel10k (~/.oh-my-zsh)?" n; then run rm -rf "$HOME/.oh-my-zsh"; fi
 
 say ""
