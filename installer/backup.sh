@@ -48,22 +48,51 @@ manifest_del() {
   awk -F'\t' -v p="$1" '$2!=p' "$NL_MANIFEST" > "$tmp"; mv "$tmp" "$NL_MANIFEST"
 }
 
-# Снимок всех конфигов проекта одним архивом (для update.sh)
+# Снимок конфигов проекта и пользовательских Zsh-файлов одним архивом.
+# Zsh-файлы не принадлежат updater: это страховочная копия, а не источник для восстановления.
 nl_snapshot() {
-  local out="$NL_BACKUPS/pre-update-$(date +%Y%m%d-%H%M%S).tar.gz" cfg=() home=() p
-  for p in hypr waybar rofi kitty swaync fastfetch gtk-3.0 gtk-4.0 northling kdeglobals; do
-    [ -e "$XDG_CONFIG/$p" ] && cfg+=("$p")
+  local out="$NL_BACKUPS/pre-update-$(date +%Y%m%d-%H%M%S).tar.gz"
+  local stage p
+  local cfg=(hypr waybar rofi kitty swaync fastfetch gtk-3.0 gtk-4.0 northling kdeglobals)
+  local home=(.zshrc .zshrc.local .p10k.zsh .p10k.northling.zsh)
+  local found=0
+
+  for p in "${cfg[@]}"; do
+    [ -e "$XDG_CONFIG/$p" ] && { found=1; break; }
   done
-  for p in .zshrc .p10k.zsh; do [ -e "$HOME/$p" ] && home+=("$p"); done
-  if [ ${#cfg[@]} -eq 0 ] && [ ${#home[@]} -eq 0 ]; then info "Снимок: пока нечего сохранять."; return 0; fi
-  if [ "$DRY_RUN" = 1 ]; then info "[пробный запуск] снимок конфигов → $(tilde "$out")"; return 0; fi
-  mkdir -p "$NL_BACKUPS"
-  # два корня в одном архиве: ~/.config/* и ~/.zshrc, ~/.p10k.zsh (в архиве: config/… и home/…)
-  local args=()
-  [ ${#cfg[@]}  -gt 0 ] && args+=(--transform 's|^|config/|' -C "$XDG_CONFIG" "${cfg[@]}")
-  if tar czf "$out" "${args[@]}" 2>/dev/null; then
-    ok "Снимок конфигов: $(tilde "$out")"
+  if [ "$found" = 0 ]; then
+    for p in "${home[@]}"; do
+      [ -e "$HOME/$p" ] && { found=1; break; }
+    done
+  fi
+  if [ "$found" = 0 ]; then info "Снимок: пока нечего сохранять."; return 0; fi
+  if [ "$DRY_RUN" = 1 ]; then
+    info "[пробный запуск] снимок конфигов и Zsh → $(tilde "$out")"
+    return 0
+  fi
+
+  mkdir -p "$NL_BACKUPS" || {
+    warn "Не удалось создать каталог бэкапов — снимок пропущен."
+    return 0
+  }
+  stage="$(mktemp -d "${TMPDIR:-/tmp}/northling-snapshot.XXXXXX")" || {
+    warn "Не удалось подготовить временный каталог снимка."
+    return 0
+  }
+  mkdir -p "$stage/config" "$stage/home"
+
+  for p in "${cfg[@]}"; do
+    [ -e "$XDG_CONFIG/$p" ] && cp -a "$XDG_CONFIG/$p" "$stage/config/$p" || true
+  done
+  for p in "${home[@]}"; do
+    [ -e "$HOME/$p" ] && cp -a "$HOME/$p" "$stage/home/$p" || true
+  done
+
+  if tar czf "$out" -C "$stage" config home 2>/dev/null; then
+    ok "Снимок конфигов и Zsh: $(tilde "$out")"
   else
     warn "Не удалось создать снимок конфигов (продолжаю: остальные бэкапы делаются по файлам)."
+    rm -f "$out"
   fi
+  rm -rf "$stage"
 }
