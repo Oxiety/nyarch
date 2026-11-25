@@ -29,7 +29,7 @@ hl.env("ELECTRON_OZONE_PLATFORM_HINT", "auto")      -- VS Code / Discord нат�
 -- >>> NORTHLING:NVIDIA:BEGIN
 hl.env("LIBVA_DRIVER_NAME", "nvidia")
 hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")
-hl.env("NVD_BACKEND", "direct")
+-- hl.env("NVD_BACKEND", "direct")
 -- <<< NORTHLING:NVIDIA:END
 
 -- ── C. Палитра Northling Midnight (themes/northling-midnight/colors.env) ─────
@@ -39,7 +39,7 @@ hl.env("NVD_BACKEND", "direct")
 -- ── D. Монитор: 1920×1080 @ 120 Гц. VRR не включаем ──────────────────────────
 hl.monitor({
     output   = "",
-    mode     = "1920x1080@120",
+    mode     = "preferred",
     position = "0x0",
     scale    = 1,
 })

@@ -22,7 +22,7 @@ case "$cmd" in
   uninstall)         exec bash "$repo/uninstall.sh" "$@" ;;
   doctor|check)      exec bash "$repo/installer/verify.sh" "$@" ;;
   wallpaper|wall)    [ $# -eq 0 ] && set -- --menu; exec "$here/northling-wallpaper" "$@" ;;
-  diag)              exec "$here/northling-diag" "$@" ;;
+  diag)              exec bash "$here/northling-diag" "$@" ;;
   version|-v)        echo "Northling Arch $(cat "$repo/VERSION")" ;;
   path)              echo "$repo" ;;
   *)                 sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//' ;;

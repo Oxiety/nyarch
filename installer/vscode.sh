@@ -11,7 +11,7 @@ vscode_install() {
   if have code; then ok_dim "VS Code уже установлен: $(code --version 2>/dev/null | head -n1)"
   else
     info "Официальный VS Code есть только в AUR (пакет visual-studio-code-bin)."
-    aur_install visual-studio-code-bin || warn "VS Code не установлен — настройки всё равно положу, они подхватятся позже."
+    pkg_install code || warn "VS Code не установлен — настройки всё равно положу, они подхватятся позже."
   fi
 
   # настройки редактора: «твой» файл — первый раз кладём (со старым в бэкап), дальше не перезаписываем

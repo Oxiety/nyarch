@@ -51,7 +51,7 @@ t "nv-пакет libva-nvidia-driver поставлен (GPU=1)" "grep -qx libva
 t "драйвер nvidia НЕ ставился/не трогался" "! grep -qE '^nvidia' '$FAKE/installed'"
 t "Bluetooth не ставился" "! grep -qiE 'bluez|blueman' '$FAKE/installed'"
 t "пакет без репо (nm-connection-editor) пропущен с предупреждением" "grep -q 'nm-connection-editor' '$T/i1.log' && ! grep -qx nm-connection-editor '$FAKE/installed'"
-t "VS Code ставился через paru" "grep -qx visual-studio-code-bin '$FAKE/installed'"
+t "VS Code ставился через paru" "grep -qx code '$FAKE/installed'"
 for f in .config/hypr/hyprland.lua .config/hypr/hyprlock.conf .config/hypr/hypridle.conf .config/waybar/config.jsonc .config/waybar/style.css .config/waybar/scripts/gpu.sh \
          .config/rofi/config.rasi .config/rofi/northling.rasi .config/kitty/kitty.conf .config/swaync/config.json .config/swaync/style.css .config/kdeglobals \
          .config/fastfetch/config.jsonc .config/gtk-3.0/settings.ini .zshrc .p10k.zsh .config/Code/User/settings.json .local/bin/northling .local/bin/northling-wallpaper \

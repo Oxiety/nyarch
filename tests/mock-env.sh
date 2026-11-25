@@ -32,7 +32,7 @@ P
   cat > "$T/bin/paru" <<'P'
 #!/usr/bin/env bash
 if [ "$1" = -S ]; then for a in "$@"; do case "$a" in -*) ;; *) echo "$a" >> "$FAKE/installed"; echo "[mock paru] $a";
-  [ "$a" = visual-studio-code-bin ] && printf '#!/bin/sh\necho 1.99.0\n' > "$FAKE/../bin/code" && chmod +x "$FAKE/../bin/code" ;; esac; done; fi
+  [ "$a" = code ] && printf '#!/bin/sh\necho 1.99.0\n' > "$FAKE/../bin/code" && chmod +x "$FAKE/../bin/code" ;; esac; done; fi
 exit 0
 P
   cat > "$T/bin/git" <<'P'
