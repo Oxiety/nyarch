@@ -79,13 +79,29 @@ nl_snapshot() {
     warn "Не удалось подготовить временный каталог снимка."
     return 0
   }
-  mkdir -p "$stage/config" "$stage/home"
+  mkdir -p "$stage/config" "$stage/home" || {
+    warn "Не удалось подготовить структуру снимка."
+    rm -rf "$stage"
+    return 0
+  }
 
   for p in "${cfg[@]}"; do
-    [ -e "$XDG_CONFIG/$p" ] && cp -a "$XDG_CONFIG/$p" "$stage/config/$p" || true
+    if [ -e "$XDG_CONFIG/$p" ]; then
+      cp -a "$XDG_CONFIG/$p" "$stage/config/$p" || {
+        warn "Не удалось добавить в снимок: $XDG_CONFIG/$p"
+        rm -rf "$stage"
+        return 0
+      }
+    fi
   done
   for p in "${home[@]}"; do
-    [ -e "$HOME/$p" ] && cp -a "$HOME/$p" "$stage/home/$p" || true
+    if [ -e "$HOME/$p" ]; then
+      cp -a "$HOME/$p" "$stage/home/$p" || {
+        warn "Не удалось добавить в снимок: $HOME/$p"
+        rm -rf "$stage"
+        return 0
+      }
+    fi
   done
 
   if tar czf "$out" -C "$stage" config home 2>/dev/null; then
