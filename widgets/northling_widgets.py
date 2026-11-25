@@ -164,15 +164,18 @@ class App:
 
     def show_weather(self, w, err):
         if w is None:
-            self.w_icon.set_text("·")
-            self.w_temp.set_text("--")
+            self.w_icon.set_text("☁")
+            self.w_temp.set_text("")
+            self.w_place.set_text("ПОГОДА")
             if "не задан город" in (err or ""):
-                self.w_place.set_text("Погода")
-                self.w_text.set_text("Укажи свой город:  northling widgets config")
+                self.w_text.set_text("Город не указан")
+                self.w_extra.set_text("В терминале:  northling widgets city Название")
+            elif "не найден" in (err or ""):
+                self.w_text.set_text("Такой город не найден")
+                self.w_extra.set_text("Попробуй другое написание:  northling widgets city Название")
             else:
-                self.w_place.set_text("Погода")
-                self.w_text.set_text("Нет данных (сеть?)")
-            self.w_extra.set_text("")
+                self.w_text.set_text("Нет данных (проверь сеть)")
+                self.w_extra.set_text("")
             return False
         self.w_icon.set_text(w["icon"])
         self.w_temp.set_text(f"{w['temp']}{w['unit']}")

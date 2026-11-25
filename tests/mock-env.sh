@@ -6,7 +6,7 @@ mock_setup() {
   T="${NL_TEST_DIR:-/tmp/nl-mock}"; rm -rf "$T"; mkdir -p "$T/bin" "$T/home" "$T/fake"
   export HOME="$T/home" XDG_CONFIG_HOME="" XDG_DATA_HOME="" XDG_STATE_HOME="" FAKE="$T/fake"
   unset XDG_CONFIG_HOME XDG_DATA_HOME XDG_STATE_HOME HYPRLAND_INSTANCE_SIGNATURE
-  export NL_SDDM_THEMES="$T/sddm/themes" NL_SDDM_CONFD="$T/sddm/conf.d" NL_ALLOW_NONARCH=1 NL_ALLOW_ROOT=1 NO_COLOR=1 PATH="$T/bin:$PATH" NL_FORCE_NVIDIA="${NL_FORCE_NVIDIA:-1}"
+  export NL_SDDM_THEMES="$T/sddm/themes" NL_SDDM_ETC="$T/sddm/etc" NL_ALLOW_NONARCH=1 NL_ALLOW_ROOT=1 NO_COLOR=1 PATH="$T/bin:$PATH" NL_FORCE_NVIDIA="${NL_FORCE_NVIDIA:-1}"
   : > "$FAKE/installed"
   # «репозиторий»: всё, кроме двух пакетов (проверяем ветку «нет в репо»)
   ( cd "$(dirname "${BASH_SOURCE[0]}")/../packages" && cat *.txt ) | sed -e 's/#.*//' -e 's/nv://' | tr -s ' \t|' '\n' | grep -v '^$' \

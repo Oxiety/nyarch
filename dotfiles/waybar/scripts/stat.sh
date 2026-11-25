@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 # Мини-метрики для Waybar: stat.sh cpu|mem|gpu → JSON {text,class,tooltip}
-# Столбик ▁▂▃▄▅▆▇█ показывает загрузку; класс ok/warn/crit красит его в CSS.
-spark() { local p=$1 s=(▁ ▂ ▃ ▄ ▅ ▆ ▇ █); local i=$(( p * 8 / 101 )); echo "${s[$i]}"; }
+# Цвет текста (ok/warn/crit) задаёт CSS по классу.
 cls()   { local p=$1; if [ "$p" -ge 90 ]; then echo crit; elif [ "$p" -ge 70 ]; then echo warn; else echo ok; fi; }
-emit()  { printf '{"text":"%s %s %s%%","class":"%s","tooltip":"%s"}\n' "$1" "$(spark "$2")" "$2" "$(cls "$2")" "$3"; }
+emit()  { printf '{"text":"%s %s%%","class":"%s","tooltip":"%s"}\n' "$1" "$2" "$(cls "$2")" "$3"; }
 
 case "${1:-}" in
   cpu)

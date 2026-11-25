@@ -15,7 +15,7 @@
 window#waybar { background: transparent; color: #E5E7F5; }
 
 /* ── общий вид островов ── */
-#custom-logo, #workspaces, #custom-player, #clock, #sys, #io, #tray,
+#custom-logo, #workspaces, #custom-player, #custom-clock, #sys, #io, #tray,
 #custom-notification, #custom-power {
     background: rgba(14, 10, 36, 0.80);
     border: 1px solid rgba(167, 139, 250, 0.22);
@@ -60,16 +60,16 @@ window#waybar { background: transparent; color: #E5E7F5; }
 #custom-player:hover   { border-color: #82BFFF; }
 
 /* ── часы по центру ── */
-#clock {
-    padding: 0 20px;
+#custom-clock {
+    padding: 0 22px;
     font-size: 14px;
     border-color: rgba(167, 139, 250, 0.38);
 }
-#clock:hover { border-color: #A78BFA; }
+#custom-clock:hover { border-color: #A78BFA; }
 
 /* ── системные метрики: внутри острова без своих рамок ── */
 #sys, #io { padding: 0 6px; }
-#custom-cpu, #custom-mem, #custom-gpu, #network, #pulseaudio, #language {
+#custom-cpu, #custom-mem, #custom-gpu, #network, #pulseaudio, #custom-lang {
     background: transparent; border: none; padding: 0 9px; margin: 0;
 }
 #custom-cpu { color: #A78BFA; }
@@ -81,9 +81,9 @@ window#waybar { background: transparent; color: #E5E7F5; }
 #network.disconnected { color: #F27A9C; }
 #pulseaudio    { color: #C4B8F5; }
 #pulseaudio.muted { color: #9E94CD; }
-#language      { color: #9E94CD; font-weight: 700; }
+#custom-lang   { color: #9E94CD; font-weight: 700; }
 #custom-cpu:hover, #custom-mem:hover, #custom-gpu:hover,
-#network:hover, #pulseaudio:hover, #language:hover { color: #E5E7F5; }
+#network:hover, #pulseaudio:hover, #custom-lang:hover { color: #E5E7F5; }
 
 #tray { padding: 0 12px; }
 #tray > .passive { -gtk-icon-effect: dim; }

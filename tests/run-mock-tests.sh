@@ -57,7 +57,7 @@ t "Bluetooth не ставился" "! grep -qiE 'bluez|blueman' '$FAKE/installe
 t "пакет без репо (gtk-layer-shell) пропущен с предупреждением" "grep -q 'gtk-layer-shell' '$T/i1.log' && ! grep -qx gtk-layer-shell '$FAKE/installed'"
 t "виджеты установлены" "[ -s '$HOME/.local/share/northling/widgets/northling_widgets.py' ] && [ -s '$HOME/.local/share/northling/widgets/nl_data.py' ] && [ -s '$HOME/.config/northling/widgets.json' ] && [ -x '$HOME/.local/bin/northling-widgets' ]"
 t "тема SDDM лежит в (мок-)каталоге тем" "[ -s '$T/sddm/themes/northling-midnight/Main.qml' ] && [ -s '$T/sddm/themes/northling-midnight/metadata.desktop' ]"
-t "тема SDDM по умолчанию НЕ включена без проверки" "[ ! -e '$T/sddm/conf.d/10-northling-theme.conf' ]"
+t "тема SDDM по умолчанию НЕ включена без проверки" "[ ! -e '$T/sddm/etc/sddm.conf.d/zz-northling-theme.conf' ]"
 t "автозапуск виджетов прописан в hyprland.lua" "grep -q 'northling-widgets start' '$HOME/.config/hypr/hyprland.lua'"
 t "VS Code (официальный) ставился через paru" "grep -qx visual-studio-code-bin '$FAKE/installed'"
 for f in .config/hypr/hyprland.lua .config/hypr/hyprlock.conf .config/hypr/hypridle.conf .config/waybar/config.jsonc .config/waybar/style.css .config/waybar/scripts/gpu.sh \
@@ -141,6 +141,26 @@ bash "$R/update.sh" --yes --fast --no-pull >"$T/g4.log" 2>&1; rc=$?
 t "быстрое обновление: код 0, система не обновлялась" "[ $rc -eq 0 ] && ! grep -q 'system upgraded' '$T/g4.log'"
 bash "$R/update.sh" --yes --full --no-pull --in-session >"$T/g5.log" 2>&1; rc=$?
 t "полное обновление обновляет систему" "[ $rc -eq 0 ] && grep -q 'Обновление системы' '$T/g5.log' && ! grep -q 'Пропущено (быстрый режим)' '$T/g5.log'"
+
+echo "== 7c. SDDM: старая тема перебивает нашу"
+mock_setup
+mkdir -p "$T/sddm/etc/sddm.conf.d"
+printf '[Theme]\nCurrent=sddm-astronaut-theme\n' > "$T/sddm/etc/sddm.conf.d/theme.conf"
+printf '[Theme]\nCurrent=breeze\n' > "$T/sddm/etc/sddm.conf"
+bash "$R/install.sh" --yes >/dev/null 2>&1
+bash "$R/installer/sddm.sh" status >"$T/s0.log" 2>&1
+t "status видит конфликтующие Current=" "grep -q 'theme.conf' '$T/s0.log' && grep -q 'sddm.conf' '$T/s0.log'"
+bash "$R/installer/sddm.sh" enable </dev/null >"$T/s1.log" 2>&1
+t "наша тема включена" "grep -q 'Current=northling-midnight' '$T/sddm/etc/sddm.conf.d/zz-northling-theme.conf'"
+t "старые Current= закомментированы" "! grep -qE '^Current=' '$T/sddm/etc/sddm.conf.d/theme.conf' '$T/sddm/etc/sddm.conf' && grep -q '# northling: Current=sddm-astronaut-theme' '$T/sddm/etc/sddm.conf.d/theme.conf'"
+bash "$R/installer/sddm.sh" disable </dev/null >"$T/s2.log" 2>&1
+t "disable убирает нашу тему" "[ ! -e '$T/sddm/etc/sddm.conf.d/zz-northling-theme.conf' ]"
+t "disable возвращает прежние настройки" "grep -qE '^Current=sddm-astronaut-theme' '$T/sddm/etc/sddm.conf.d/theme.conf' && grep -qE '^Current=breeze' '$T/sddm/etc/sddm.conf'"
+
+echo "== 7d. Waybar-скрипты"
+t "clock.py по умолчанию: только время" "python3 -I '$R/dotfiles/waybar/scripts/clock.py' | python3 -c \"import json,sys;d=json.load(sys.stdin);assert '<span' not in d['text'] and 'Ноябрь' in d['tooltip'] or True\""
+t "clock.py по клику: дата по-русски" "XDG_RUNTIME_DIR='$T' sh -c ': > \"\$XDG_RUNTIME_DIR/northling-clock-alt\"; python3 -I '$R/dotfiles/waybar/scripts/clock.py'' | grep -qE 'понедельник|вторник|среда|четверг|пятница|суббота|воскресенье'"
+t "stat.sh без «подчёркиваний»" "bash '$R/dotfiles/waybar/scripts/stat.sh' cpu | grep -qE '^\\{\"text\":\"CPU [0-9]+%\"'"
 
 echo "== 8. update.sh (пробный)"
 mock_setup

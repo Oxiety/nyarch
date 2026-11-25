@@ -1,14 +1,14 @@
 /* Northling Midnight — виджеты рабочего стола */
 window { background: transparent; }
-* { font-family: "JetBrainsMono Nerd Font", "Noto Sans", sans-serif; color: #E5E7F5; }
+* { font-family: "JetBrainsMono Nerd Font", "Noto Sans", sans-serif; color: #E5E7F5; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45); }
 
 .card {
-    background: rgba(14, 10, 36, 0.74);
+    background: rgba(14, 10, 36, 0.84);
     border: 1px solid rgba(167, 139, 250, 0.26);
     border-radius: 22px;
     padding: 16px 20px;
 }
-.hero { background: linear-gradient(145deg, rgba(52, 38, 118, 0.80), rgba(14, 10, 36, 0.78)); border-color: rgba(210, 132, 229, 0.36); }
+.hero { background: linear-gradient(145deg, rgba(52, 38, 118, 0.88), rgba(14, 10, 36, 0.86)); border-color: rgba(210, 132, 229, 0.36); }
 .clock-time { font-size: 76px; font-weight: 800; color: #E5E7F5; }
 .clock-day  { font-size: 20px; font-weight: 700; color: #A78BFA; }
 .clock-date { font-size: 14px; color: #9E94CD; }

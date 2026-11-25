@@ -20,5 +20,18 @@ case "${1:-start}" in
     [ -f "$CONF" ] || { echo "нет конфига — запусти northling update"; exit 1; }
     for e in "${VISUAL:-}" "${EDITOR:-}" code nano; do [ -n "$e" ] && command -v "$e" >/dev/null && { "$e" "$CONF"; "$0" restart; exit 0; }; done
     echo "Открой файл любым редактором: $CONF" ;;
-  *) echo "использование: northling-widgets start|stop|restart|status|config"; exit 2 ;;
+  city)
+    shift; city="$*"
+    [ -n "$city" ] || { echo "использование: northling widgets city Название_города   (например: northling widgets city Калининград)"; exit 2; }
+    [ -f "$CONF" ] || { echo "нет конфига — запусти northling update"; exit 1; }
+    python3 - "$CONF" "$city" <<'PY' || exit 1
+import json, sys
+p, city = sys.argv[1], sys.argv[2]
+d = json.load(open(p, encoding="utf-8"))
+w = d.setdefault("weather", {}); w["city"] = city; w["latitude"] = None; w["longitude"] = None
+json.dump(d, open(p, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+print("Город для погоды:", city)
+PY
+    "$0" restart ;;
+  *) echo "использование: northling-widgets start|stop|restart|status|config|city НАЗВАНИЕ"; exit 2 ;;
 esac

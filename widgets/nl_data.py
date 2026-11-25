@@ -29,6 +29,13 @@ def load_config(path=CONF_PATH):
     return cfg
 
 
+def _run(cmd, timeout=3):
+    """subprocess без LD_PRELOAD: gtk-layer-shell нужен только самому окну, но не nvidia-smi/playerctl/nmcli."""
+    env = dict(os.environ)
+    env.pop("LD_PRELOAD", None)
+    return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, env=env)
+
+
 def _read(path):
     with open(path, encoding="utf-8") as f:
         return f.read()
@@ -67,9 +74,8 @@ def memory():
 def gpu():
     """NVIDIA: (загрузка %, темп °C, память МиБ занято, всего) или None."""
     try:
-        out = subprocess.run(
-            ["nvidia-smi", "--query-gpu=utilization.gpu,temperature.gpu,memory.used,memory.total",
-             "--format=csv,noheader,nounits"], capture_output=True, text=True, timeout=3)
+        out = _run(["nvidia-smi", "--query-gpu=utilization.gpu,temperature.gpu,memory.used,memory.total",
+                    "--format=csv,noheader,nounits"], timeout=4)
         if out.returncode != 0:
             return None
         u, t, mu, mt = [int(x.strip()) for x in out.stdout.strip().splitlines()[0].split(",")]
@@ -86,8 +92,7 @@ class Network:
     @staticmethod
     def _active():
         try:
-            out = subprocess.run(["nmcli", "-t", "-f", "DEVICE,TYPE,STATE,CONNECTION", "device"],
-                                 capture_output=True, text=True, timeout=3).stdout
+            out = _run(["nmcli", "-t", "-f", "DEVICE,TYPE,STATE,CONNECTION", "device"]).stdout
         except (OSError, subprocess.SubprocessError):
             return None
         for line in out.splitlines():
@@ -131,10 +136,8 @@ def human_rate(bps):
 def player():
     """dict(status, artist, title, pos, length) или None, если ничего нет."""
     try:
-        out = subprocess.run(
-            ["playerctl", "metadata", "--format",
-             "{{status}}|{{artist}}|{{title}}|{{position}}|{{mpris:length}}"],
-            capture_output=True, text=True, timeout=2)
+        out = _run(["playerctl", "metadata", "--format",
+                    "{{status}}|{{artist}}|{{title}}|{{position}}|{{mpris:length}}"], timeout=2)
     except (OSError, subprocess.SubprocessError):
         return None
     if out.returncode != 0 or not out.stdout.strip():
@@ -152,7 +155,7 @@ def player():
 def player_cmd(cmd):
     if cmd in ("play-pause", "next", "previous"):
         try:
-            subprocess.run(["playerctl", cmd], timeout=2)
+            _run(["playerctl", cmd], timeout=2)
         except (OSError, subprocess.SubprocessError):
             pass
 

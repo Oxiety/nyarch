@@ -37,7 +37,9 @@ nl_verify() {
       || vwarn "виджетам не хватает python-gobject / gtk-layer-shell → northling update --full (из TTY)"
   fi
   if [ "${WITH_SDDM:-1}" = 1 ] && [ -d "${NL_SDDM_THEMES:-/usr/share/sddm/themes}/northling-midnight" ]; then
-    if [ -f "${NL_SDDM_CONFD:-/etc/sddm.conf.d}/10-northling-theme.conf" ]; then vok "тема SDDM установлена и включена"; else vwarn "тема SDDM установлена, но не включена: northling sddm test → northling sddm enable"; fi
+    if [ -f "${NL_SDDM_ETC:-/etc}/sddm.conf.d/zz-northling-theme.conf" ]; then vok "тема SDDM установлена и включена"; else vwarn "тема SDDM установлена, но не включена: northling sddm test → northling sddm enable"; fi
+    local sc; sc="$(grep -lE '^[[:space:]]*Current[[:space:]]*=' "${NL_SDDM_ETC:-/etc}/sddm.conf" "${NL_SDDM_ETC:-/etc}"/sddm.conf.d/*.conf 2>/dev/null | grep -v zz-northling-theme.conf)"
+    [ -n "$sc" ] && vwarn "тему SDDM перебивает Current= в: $(echo $sc) — исправит northling sddm enable"
   fi
   v_json "$XDG_CONFIG/waybar/config.jsonc"
   v_json "$XDG_CONFIG/swaync/config.json"

@@ -1,4 +1,4 @@
-# n. Northling Arch — v0.1.0 Beta 2
+# n. Northling Arch — v0.1.0 Beta 3
 
 Личное окружение **Arch Linux + Hyprland** в тёмной индиго-лавандовой теме **Northling Midnight**
 (палитра сайта [northling.space](https://northling.space)). Один установщик — и конфиги на месте.
@@ -9,6 +9,7 @@
 ## Что внутри
 
 - **Hyprland** (конфиг на Lua, синтаксис 0.57), Hyprlock, Hypridle (блокировка 10 мин, сон 30 мин)
+- Клик по часам в панели показывает ещё и дату (по-русски); наведи — календарь на месяц
 - **Waybar «Острова»** — плавающие стеклянные блоки, рабочие столы-«пилюли», мини-метрики CPU/RAM/GPU, плеер
 - **Виджеты рабочего стола**: большие часы, дата, календарь, погода (твой город), CPU/RAM/GPU, сеть, плеер с кнопками
 - **SwayNC** (уведомления), **Rofi** (лаунчер), **Kitty**, **Dolphin**
@@ -53,7 +54,7 @@ git clone https://github.com/Oxiety/nyarch.git ~/nyarch && cd ~/nyarch && bash i
 Слева — часы, дата, календарь. Справа — погода, система (CPU/RAM/GPU/сеть) и плеер (появляется, когда что-то играет).
 Настройки: `northling widgets config` (файл `~/.config/northling/widgets.json`):
 
-- **Погода**: впиши свой город в `weather.city` (например `"Калининград"`) или точные `latitude`/`longitude`. Данные — Open-Meteo, ключ не нужен. Адреса в репозитории нет.
+- **Погода**: `northling widgets city Калининград` (подставь свой город) — и всё. Можно и точные `latitude`/`longitude` в конфиге. Данные — Open-Meteo, ключ не нужен. Адреса в репозитории нет.
 - Любой виджет можно выключить (`"enabled": false`), поменять отступы и ширину (`layout`).
 - Управление: `northling widgets start|stop|restart|status`.
 - Нужны пакеты `python-gobject`, `gtk3`, `gtk-layer-shell` (ставятся полным обновлением/установкой).
@@ -64,7 +65,9 @@ git clone https://github.com/Oxiety/nyarch.git ~/nyarch && cd ~/nyarch && bash i
 и включает, если нет ошибок. Вручную: `northling sddm test` → `northling sddm enable` (или `disable`).
 Фон экрана входа = копия обоев: `northling sddm sync`.
 
-Если экран входа сломался: **Ctrl+Alt+F3** → логин → `sudo rm /etc/sddm.conf.d/10-northling-theme.conf` → `reboot`.
+Если старая тема (например `sddm-astronaut`) всё ещё показывается — её настройка `Current=` перебивает нашу. `northling sddm enable` найдёт такие строки, закомментирует их (с бэкапом) и включит нашу тему. `northling sddm status` покажет, что мешает.
+
+Если экран входа сломался: **Ctrl+Alt+F3** → логин → `northling sddm disable` (или `sudo rm /etc/sddm.conf.d/zz-northling-theme.conf`) → `reboot`.
 
 Чёрный экран ~3 секунды при входе: причину по гаданию не чиним. `northling diag` собирает логи SDDM/NVIDIA/Hyprland — пришли вывод.
 
@@ -81,7 +84,7 @@ git clone https://github.com/Oxiety/nyarch.git ~/nyarch && cd ~/nyarch && bash i
 | Super+Space / F / P / J | Плавающее / полный экран / pseudo / раскладка |
 | Super+1…0 | Рабочие столы (Shift — перенести окно) |
 | Print / Shift+Print | Скриншот области / экрана |
-| Alt+Shift | Раскладка us/ru |
+| Alt+Shift | Раскладка EN/RU (текущая видна в панели, клик по ней тоже переключает) |
 | Super+M | Выход из Hyprland |
 
 ## Настройка

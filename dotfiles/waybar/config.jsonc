@@ -9,7 +9,7 @@
     "reload_style_on_change": true,
 
     "modules-left":   ["custom/logo", "hyprland/workspaces", "custom/player"],
-    "modules-center": ["clock"],
+    "modules-center": ["custom/clock"],
     "modules-right":  ["group/sys", "group/io", "tray", "custom/notification", "custom/power"],
 
     "custom/logo": {
@@ -37,21 +37,13 @@
         "on-click-middle": "playerctl previous"
     },
 
-    "clock": {
-        "format": "<b>{:%H:%M}</b>  <span color='#9E94CD'>{:%a, %d %b}</span>",
-        "format-alt": "<b>{:%H:%M:%S}</b>  <span color='#9E94CD'>{:%A, %d %B %Y}</span>",
-        "interval": 1,
-        "tooltip-format": "<tt>{calendar}</tt>",
-        "calendar": {
-            "mode": "month",
-            "weeks-pos": "left",
-            "format": {
-                "months":   "<span color='#A78BFA'><b>{}</b></span>",
-                "weekdays": "<span color='#9E94CD'>{}</span>",
-                "weeks":    "<span color='#82BFFF'>{}</span>",
-                "today":    "<span color='#D284E5'><b><u>{}</u></b></span>"
-            }
-        }
+    "custom/clock": {
+        "exec": "python3 ~/.config/waybar/scripts/clock.py",
+        "return-type": "json",
+        "interval": 2,
+        "signal": 8,
+        "tooltip": true,
+        "on-click": "~/.config/waybar/scripts/clock-toggle.sh"
     },
 
     "group/sys": {
@@ -64,7 +56,7 @@
 
     "group/io": {
         "orientation": "horizontal",
-        "modules": ["network", "pulseaudio", "hyprland/language"]
+        "modules": ["network", "pulseaudio", "custom/lang"]
     },
 
     "network": {
@@ -85,10 +77,11 @@
         "tooltip": false
     },
 
-    "hyprland/language": {
-        "format": "{short}",
-        "format-en": "EN",
-        "format-ru": "RU"
+    "custom/lang": {
+        "exec": "~/.config/waybar/scripts/lang.sh",
+        "return-type": "json",
+        "interval": 1,
+        "on-click": "hyprctl switchxkblayout all next"
     },
 
     "tray": { "spacing": 10 },
