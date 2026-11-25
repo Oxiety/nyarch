@@ -1,0 +1,58 @@
+# =============================================================================
+# Northling Arch — ~/.zshrc   (Zsh + Oh My Zsh + Powerlevel10k, Northling Midnight)
+#
+# Это «твой» файл: установщик кладёт его один раз и больше не перезаписывает,
+# если ты его менял. Свои добавки пиши в ~/.zshrc.local — он подхватывается ниже.
+# =============================================================================
+
+# Мгновенный prompt Powerlevel10k — должен быть в самом верху
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+
+export PATH="$HOME/.local/bin:$PATH"
+export EDITOR="${EDITOR:-nano}"
+
+# ── Oh My Zsh ────────────────────────────────────────────────────────────────
+export ZSH="$HOME/.oh-my-zsh"
+ZSH_THEME="powerlevel10k/powerlevel10k"
+plugins=(git sudo extract fzf zoxide)        # Esc Esc — добавить sudo; x файл.zip — распаковать
+[[ -r "$ZSH/oh-my-zsh.sh" ]] && source "$ZSH/oh-my-zsh.sh"
+
+# ── История ──────────────────────────────────────────────────────────────────
+HISTFILE="$HOME/.zsh_history"
+HISTSIZE=50000
+SAVEHIST=50000
+setopt HIST_IGNORE_ALL_DUPS HIST_REDUCE_BLANKS SHARE_HISTORY
+
+# ── Алиасы ───────────────────────────────────────────────────────────────────
+if (( $+commands[eza] )); then
+  alias ls='eza --icons --group-directories-first'
+  alias ll='eza -lah --icons --group-directories-first --git'
+  alias la='eza -a --icons --group-directories-first'
+  alias lt='eza --tree --level=2 --icons'
+fi
+if (( $+commands[bat] )); then
+  alias cat='bat --paging=never'      # обычный cat: \cat файл
+  alias catp='bat'
+fi
+alias ..='cd ..'
+alias ...='cd ../..'
+alias g='git'
+alias gs='git status -sb'
+alias ff='fastfetch'
+alias update='northling update'       # обновление системы и конфигов
+alias doctor='northling doctor'       # проверка, что всё работает
+mkcd() { mkdir -p -- "$1" && cd -- "$1"; }
+
+# ── Тема prompt (стрелочные сегменты Northling Midnight) ─────────────────────
+[[ -r "$HOME/.p10k.zsh" ]] && source "$HOME/.p10k.zsh"
+
+# ── Твои личные добавки ──────────────────────────────────────────────────────
+[[ -r "$HOME/.zshrc.local" ]] && source "$HOME/.zshrc.local"
+
+# ── Подсказки и подсветка (пакеты Arch; syntax-highlighting — строго последним) ─
+[[ -r /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh ]] && \
+  source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
+[[ -r /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]] && \
+  source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh

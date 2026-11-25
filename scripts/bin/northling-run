@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Обёртка для ярлыков из меню приложений: выполнить команду northling и не закрывать окно сразу.
+"$(dirname "$(readlink -f "$0")")/northling" "$@"
+rc=$?
+echo
+read -r -p "Нажми Enter, чтобы закрыть окно…" _
+exit $rc

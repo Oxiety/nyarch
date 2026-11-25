@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Northling: проверка
+Comment=Проверить, что всё в Northling Arch работает
+Exec=kitty --title "Northling: проверка" @HOME@/.local/bin/northling-run doctor
+Icon=utilities-system-monitor
+Terminal=false
+Categories=System;

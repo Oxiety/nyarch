@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Northling: обои
+Comment=Сменить обои рабочего стола
+Exec=@HOME@/.local/bin/northling-wallpaper --menu
+Icon=preferences-desktop-wallpaper
+Terminal=false
+Categories=Settings;

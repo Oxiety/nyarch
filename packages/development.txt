@@ -1,0 +1,6 @@
+# Northling Arch — packages/development.txt: разработка (если выбрано)
+# Официальный VS Code ставится отдельно из AUR (visual-studio-code-bin) на этапе 10.
+git
+github-cli
+nodejs
+npm

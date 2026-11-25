@@ -1,0 +1,41 @@
+# Northling Arch — packages/core.txt: система и ядро окружения (всегда ставится)
+# Bluetooth-пакетов здесь нет намеренно. «nv:» — только при наличии видеокарты NVIDIA.
+# Установленный драйвер NVIDIA (nvidia-open / nvidia) здесь НЕ перечислен и не трогается.
+
+# --- Hyprland и экосистема ---
+hyprland
+hyprlock
+hypridle
+hyprpolkitagent
+xdg-desktop-portal-hyprland
+xdg-desktop-portal-gtk
+nv:libva-nvidia-driver    # аппаратное декодирование видео (LIBVA_DRIVER_NAME=nvidia в конфиге)
+
+# --- Звук и сеть ---
+pipewire
+pipewire-pulse
+wireplumber
+pavucontrol
+networkmanager
+network-manager-applet
+nm-connection-editor
+
+# --- Панель, уведомления, лаунчер, обои ---
+waybar
+swaync
+rofi|rofi-wayland         # в новых версиях Wayland-поддержка в обычном rofi; берётся то, что есть
+swaybg
+libnotify
+
+# --- Буфер обмена, скриншоты, медиа-клавиши ---
+cliphist
+wl-clipboard
+grim
+slurp
+playerctl
+jq
+
+# --- Шрифты (Nerd Font нужен для значков в prompt и Waybar) ---
+ttf-jetbrains-mono-nerd
+noto-fonts
+noto-fonts-emoji

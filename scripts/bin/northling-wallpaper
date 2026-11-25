@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# northling-wallpaper — сменить обои, не трогая системные конфиги.
+#   northling-wallpaper              выбрать из списка (rofi)
+#   northling-wallpaper --random     случайные из ~/Pictures/Wallpapers
+#   northling-wallpaper /путь/к.png  конкретный файл
+# Твои обои: просто положи картинку в ~/Pictures/Wallpapers/ — она появится в списке.
+set -u
+conf="${XDG_CONFIG_HOME:-$HOME/.config}/northling"
+link="$conf/wallpaper"
+dir="$HOME/Pictures/Wallpapers"
+arg="${1:---menu}"
+
+notify() { command -v notify-send >/dev/null 2>&1 && notify-send "Обои" "$1"; echo "$1" >&2; }
+list() { find "$dir" -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' \) 2>/dev/null | sort; }
+
+case "$arg" in
+  --menu)
+    command -v rofi >/dev/null 2>&1 || { notify "Не найден rofi"; exit 1; }
+    choice="$(list | sed "s|^$dir/||" | rofi -dmenu -i -p "Обои")" || exit 0
+    [ -n "$choice" ] || exit 0
+    file="$dir/$choice" ;;
+  --random)
+    file="$(list | shuf -n1)" ;;
+  *)
+    file="$arg" ;;
+esac
+
+[ -f "$file" ] || { notify "Файл не найден: $file"; exit 1; }
+mkdir -p "$conf"
+ln -sfn "$(readlink -f "$file")" "$link"
+
+# запускаем новый swaybg и только потом гасим старый — без мигания
+old="$(pgrep -x swaybg || true)"
+setsid -f swaybg -i "$link" -m fill >/dev/null 2>&1 </dev/null
+sleep 0.4
+[ -n "$old" ] && kill $old 2>/dev/null
+notify "Обои: ${file##*/}"

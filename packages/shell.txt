@@ -1,0 +1,12 @@
+# Northling Arch — packages/shell.txt: Zsh и терминальные утилиты (если выбрано)
+# Oh My Zsh и Powerlevel10k ставятся через git clone, не пакетами.
+zsh
+zsh-autosuggestions
+zsh-syntax-highlighting
+fastfetch                 # может уже стоять — повторно не ставится
+fzf
+zoxide
+eza
+bat
+ripgrep
+btop

@@ -1,0 +1,134 @@
+/* Northling Arch — SwayNotificationCenter: Northling Midnight */
+
+* {
+    font-family: "JetBrainsMono Nerd Font", "Noto Sans", sans-serif;
+    font-size: 13px;
+}
+
+.notification-row {
+    outline: none;
+}
+
+.notification-row:focus,
+.notification-row:hover {
+    background: transparent;
+}
+
+.notification {
+    background: rgba(14, 10, 36, 0.94);
+    border: 1px solid rgba(167, 139, 250, 0.50);
+    border-radius: 14px;
+    margin: 6px 12px;
+    padding: 0;
+    box-shadow: none;
+}
+
+.notification.critical {
+    border-color: #F27A9C;
+}
+
+.notification-content {
+    background: transparent;
+    padding: 10px;
+    border-radius: 14px;
+}
+
+.summary {
+    color: #E5E7F5;
+    font-weight: bold;
+}
+
+.body {
+    color: #C4B8F5;
+}
+
+.time {
+    color: #9E94CD;
+}
+
+.close-button {
+    background: #34304F;
+    color: #E5E7F5;
+    text-shadow: none;
+    padding: 0;
+    border-radius: 100%;
+    margin-top: 8px;
+    margin-right: 8px;
+    min-width: 24px;
+    min-height: 24px;
+}
+
+.close-button:hover {
+    background: #F27A9C;
+    color: #0E0A24;
+}
+
+.notification-action {
+    background: #1C1155;
+    color: #E5E7F5;
+    border: 1px solid rgba(167, 139, 250, 0.30);
+    border-radius: 10px;
+    margin: 4px;
+}
+
+.notification-action:hover {
+    background: #34304F;
+}
+
+/* Центр уведомлений */
+.control-center {
+    background: rgba(14, 10, 36, 0.95);
+    border: 1px solid rgba(167, 139, 250, 0.50);
+    border-radius: 16px;
+}
+
+.control-center-list {
+    background: transparent;
+}
+
+.widget-title {
+    color: #E5E7F5;
+    margin: 10px;
+    font-size: 18px;
+}
+
+.widget-title > button {
+    background: #34304F;
+    color: #E5E7F5;
+    border: none;
+    border-radius: 10px;
+    padding: 4px 12px;
+}
+
+.widget-title > button:hover {
+    background: #A78BFA;
+    color: #0E0A24;
+}
+
+.widget-dnd {
+    margin: 8px 10px;
+    color: #E5E7F5;
+}
+
+.widget-dnd > switch {
+    background: #34304F;
+    border-radius: 12px;
+    border: none;
+}
+
+.widget-dnd > switch:checked {
+    background: #A78BFA;
+}
+
+.widget-dnd > switch slider {
+    background: #E5E7F5;
+    border-radius: 12px;
+}
+
+.widget-mpris {
+    background: rgba(167, 139, 250, 0.10);
+    border-radius: 14px;
+    margin: 8px 10px;
+    padding: 6px;
+    color: #E5E7F5;
+}

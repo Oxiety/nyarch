@@ -1,0 +1,14 @@
+/* Northling Arch — rofi: лаунчер (Super+R), история буфера (Super+V), меню питания */
+configuration {
+    modi: "drun,run,window";
+    show-icons: true;
+    icon-theme: "Papirus-Dark";
+    font: "JetBrainsMono Nerd Font 12";
+    display-drun: "Поиск";
+    display-run: "Запуск";
+    display-window: "Окна";
+    drun-display-format: "{name}";
+    terminal: "kitty";
+}
+
+@theme "northling"

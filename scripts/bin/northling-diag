@@ -1,0 +1,291 @@
+#!/usr/bin/env bash
+# =============================================================================
+# Northling Arch — Этап 0: безопасная диагностика системы
+#
+#   ТОЛЬКО ЧТЕНИЕ. Ничего не устанавливает, не меняет, не использует sudo.
+#   Результат пишется в файл ~/northling-diag-<дата>.txt (и в терминал).
+#   В отчёт НЕ попадают пароли, токены, IP/MAC-адреса и переменные окружения
+#   целиком (только короткий белый список, связанный с графикой).
+#
+#   Запуск:   bash northling-diag.sh            (файл — в домашней папке)
+#             bash northling-diag.sh /tmp/o.txt (свой путь)
+# =============================================================================
+set -u
+
+DIAG_VERSION="0.1.0"
+TS="$(date +%Y%m%d-%H%M%S)"
+OUT="${1:-$HOME/northling-diag-$TS.txt}"
+
+have() { command -v "$1" >/dev/null 2>&1; }
+hr()   { printf '\n==== %s ====\n' "$1"; }
+note() { printf '  · %s\n' "$*"; }
+
+# try: показать команду и первые N строк вывода; отсутствие команды — не ошибка
+try() {
+  local max="${MAXL:-40}"
+  if ! have "$1"; then printf '$ %s\n  (команды нет в системе)\n' "$1"; return 0; fi
+  printf '$ %s\n' "$*"
+  "$@" 2>&1 | head -n "$max" | sed 's/^/  /'
+  return 0
+}
+
+# sh_try: то же для конвейеров (строка в sh -c); первое слово должно быть командой
+sh_try() {
+  local first="${1%% *}"
+  if ! have "$first"; then printf '$ %s\n  (команды %s нет)\n' "$1" "$first"; return 0; fi
+  printf '$ %s\n' "$1"
+  sh -c "$1" 2>&1 | head -n "${MAXL:-40}" | sed 's/^/  /'
+  return 0
+}
+
+
+# Состояние службы: systemctl печатает статус И возвращает код ≠ 0, поэтому
+# берём stdout и подставляем «н/д» только если он пуст (без дублирования).
+svc_en()       { local s; s="$(systemctl is-enabled "$1" 2>/dev/null)"; printf '%s' "${s:-н/д}"; }
+svc_act()      { local s; s="$(systemctl is-active "$1" 2>/dev/null)"; printf '%s' "${s:-н/д}"; }
+svc_user_act() { local s; s="$(systemctl --user is-active "$1" 2>/dev/null)"; printf '%s' "${s:-н/д}"; }
+
+pkg_state() {
+  local p="$1" inst repo ver
+  if ! have pacman; then printf '  [?] %s\n' "$p"; return; fi
+  inst="$(pacman -Q "$p" 2>/dev/null | awk '{print $2}')"
+  if [ -n "$inst" ]; then
+    printf '  [установлен]  %-34s %s\n' "$p" "$inst"
+  elif pacman -Si "$p" >/dev/null 2>&1; then
+    repo="$(pacman -Si "$p" 2>/dev/null | awk -F': *' '/^Repository/{print $2; exit}')"
+    ver="$(pacman -Si "$p" 2>/dev/null | awk -F': *' '/^Version/{print $2; exit}')"
+    printf '  [в репо %-6s] %-34s %s\n' "$repo" "$p" "$ver"
+  else
+    printf '  [НЕТ В РЕПО]  %-34s (искать в AUR?)\n' "$p"
+  fi
+}
+
+pkgs() { local p; for p in "$@"; do pkg_state "$p"; done; }
+
+# --------------------------------------------------------------------------
+sec_header() {
+  echo "Northling Arch — диагностика v$DIAG_VERSION"
+  echo "Дата: $(date '+%F %T %z')"
+  echo "Файл: $OUT"
+  echo "Режим: только чтение (sudo не используется)"
+}
+
+sec_system() {
+  hr "1. Система"
+  sh_try "grep -E '^(PRETTY_NAME|ID|BUILD_ID)=' /etc/os-release"
+  try uname -srm
+  sh_try "uptime -p"
+  note "Сессия: XDG_SESSION_TYPE=${XDG_SESSION_TYPE:-?}  XDG_CURRENT_DESKTOP=${XDG_CURRENT_DESKTOP:-?}"
+  note "Shell по умолчанию: ${SHELL:-?}"
+  note "Пользователь в группах: $(id -nG 2>/dev/null)"
+  sh_try "df -h / /home"
+  sh_try "free -h"
+  sh_try "lscpu | grep -E 'Model name|^CPU\\(s\\)'"
+  if have pacman; then
+    note "Пакетов установлено: $(pacman -Q 2>/dev/null | wc -l)"
+    note "Явно установленных: $(pacman -Qe 2>/dev/null | wc -l)"
+    note "AUR/внешних: $(pacman -Qm 2>/dev/null | wc -l)"
+  fi
+  note "Зеркала / время последнего sync баз: $(stat -c %y /var/lib/pacman/sync/core.db 2>/dev/null | cut -d. -f1)"
+}
+
+sec_dualboot() {
+  hr "2. Загрузка и dual boot (Windows НЕ ТРОГАЕМ)"
+  if [ -d /sys/firmware/efi ]; then note "Режим: UEFI"; else note "Режим: BIOS/Legacy"; fi
+  sh_try "lsblk -o NAME,SIZE,FSTYPE,LABEL,MOUNTPOINTS"
+  try efibootmgr
+  [ -d /boot/loader ]  && note "Найден systemd-boot (/boot/loader)"
+  [ -d /boot/grub ]    && note "Найден GRUB (/boot/grub)"
+  [ -d /efi/loader ]   && note "Найден systemd-boot (/efi/loader)"
+  [ -f /etc/default/grub ] && sh_try "grep -E '^(GRUB_DISABLE_OS_PROBER|GRUB_CMDLINE_LINUX_DEFAULT|GRUB_TIMEOUT)' /etc/default/grub"
+  sh_try "cat /proc/cmdline"
+  sh_try "timedatectl | grep -E 'Time zone|RTC in local'"
+  note "Если «RTC in local TZ: no» — после Windows время на Linux может «прыгать». Лечится на стороне Linux, это обсудим отдельно."
+}
+
+sec_packages() {
+  hr "3. Пакеты: что уже стоит / что есть в репозиториях (pacman -Q / -Si, без сети)"
+  echo "-- Ядро и NVIDIA"
+  pkgs linux linux-headers nvidia-open nvidia-open-dkms nvidia nvidia-dkms nvidia-utils egl-wayland libva-nvidia-driver nvidia-settings
+  echo "-- Hyprland и экосистема"
+  pkgs hyprland hyprlock hypridle hyprpolkitagent xdg-desktop-portal-hyprland xdg-desktop-portal-gtk hyprutils hyprlang
+  echo "-- Панель, уведомления, лаунчер"
+  pkgs waybar swaync rofi rofi-wayland swaybg libnotify
+  echo "-- Приложения"
+  pkgs firefox dolphin kitty code visual-studio-code-bin vlc mpv ark
+  echo "-- Системное"
+  pkgs pipewire pipewire-pulse pipewire-alsa wireplumber networkmanager network-manager-applet playerctl cliphist wl-clipboard grim slurp jq
+  echo "-- Терминал и разработка"
+  pkgs zsh oh-my-zsh-git zsh-theme-powerlevel10k zsh-theme-powerlevel10k-git fastfetch fzf zoxide eza bat ripgrep btop git github-cli docker nodejs npm
+  echo "-- Шрифты"
+  pkgs ttf-jetbrains-mono-nerd ttf-meslo-nerd noto-fonts noto-fonts-emoji
+  echo "-- Для Qt/GTK оформления"
+  pkgs qt6ct kvantum nwg-look breeze-icons papirus-icon-theme
+  echo "-- AUR-помощник и Bluetooth (Bluetooth НЕ нужен — только проверяем, что не стоит)"
+  pkgs paru bluez bluez-utils blueman
+  have paru && note "paru: $(paru --version 2>/dev/null | head -n1)"
+}
+
+sec_hyprland() {
+  hr "4. Hyprland"
+  try hyprland --version
+  if have hyprctl && [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then
+    try hyprctl version
+    MAXL=30 try hyprctl monitors
+    MAXL=20 try hyprctl devices
+  else
+    note "Запущено не из сессии Hyprland — hyprctl пропущен (запусти скрипт из терминала внутри Hyprland, если можешь)."
+  fi
+  local d="$HOME/.config/hypr"
+  if [ -d "$d" ]; then
+    note "Каталог ~/.config/hypr найден:"
+    ls -la "$d" 2>&1 | sed 's/^/    /' | head -n 30
+    [ -f "$d/hyprland.lua" ]  && note "hyprland.lua — есть (формат Lua, 0.55+)"
+    [ -f "$d/hyprland.conf" ] && note "hyprland.conf — есть (СТАРЫЙ синтаксис; в 0.57 не используется как основной)"
+  else
+    note "~/.config/hypr отсутствует"
+  fi
+  if [ -f "$HOME/.config/hypr/hyprland.lua" ]; then
+    note "Размер hyprland.lua: $(wc -l < "$HOME/.config/hypr/hyprland.lua") строк. Первые 15:"
+    head -n 15 "$HOME/.config/hypr/hyprland.lua" | sed 's/^/    /'
+  fi
+  sh_try "ls /usr/share/wayland-sessions/"
+}
+
+sec_nvidia() {
+  hr "5. NVIDIA"
+  sh_try "lspci -nnk | grep -A3 -Ei 'vga|3d'"
+  MAXL=20 try nvidia-smi
+  sh_try "cat /proc/driver/nvidia/version"
+  if have modinfo; then
+    sh_try "modinfo nvidia | grep -E '^(filename|version|license|description)'"
+  fi
+  note "Тип модуля ядра: $(
+    if grep -q 'Open Kernel Module' /proc/driver/nvidia/version 2>/dev/null; then echo 'ОТКРЫТЫЙ (nvidia-open)';
+    elif [ -r /proc/driver/nvidia/version ]; then echo 'проприетарный (закрытый)';
+    else echo 'не определён — модуль не загружен?'; fi)"
+  sh_try "lsmod | grep -E '^(nvidia|nouveau)'"
+  for f in modeset fbdev; do
+    if [ -r "/sys/module/nvidia_drm/parameters/$f" ]; then
+      note "nvidia_drm.$f = $(cat /sys/module/nvidia_drm/parameters/$f)"
+    else
+      note "nvidia_drm.$f — параметр недоступен (модуль не загружен или нет в этой версии)"
+    fi
+  done
+  sh_try "ls /sys/class/drm/ | grep -E '^card[0-9]+$'"
+  sh_try "ls -l /dev/dri/"
+  echo "-- mkinitcpio / modprobe (ранний KMS)"
+  sh_try "grep -E '^(MODULES|HOOKS)=' /etc/mkinitcpio.conf"
+  sh_try "grep -rH nvidia /etc/modprobe.d/"
+  echo "-- Vulkan / GBM / VA-API"
+  MAXL=25 sh_try "vulkaninfo --summary"
+  MAXL=25 try vainfo
+  sh_try "ls /usr/lib/gbm/ 2>/dev/null"
+  echo "-- Служба сна NVIDIA (нужна для надёжного suspend)"
+  for s in nvidia-suspend nvidia-resume nvidia-hibernate nvidia-powerd; do
+    printf '  %-20s enabled=%s\n' "$s" "$(svc_en "$s.service")"
+  done
+  echo "-- Переменные окружения (только графические, белый список)"
+  env | grep -E '^(LIBVA_DRIVER_NAME|__GLX_VENDOR_LIBRARY_NAME|GBM_BACKEND|NVD_BACKEND|WLR_NO_HARDWARE_CURSORS|AQ_DRM_DEVICES|ELECTRON_OZONE_PLATFORM_HINT|XDG_SESSION_TYPE|XDG_CURRENT_DESKTOP|WAYLAND_DISPLAY)=' | sed 's/^/  /' \
+    || true
+  [ -z "$(env | grep -E '^(LIBVA_DRIVER_NAME|__GLX_VENDOR_LIBRARY_NAME|GBM_BACKEND)=')" ] && note "NVIDIA-переменные в окружении не заданы"
+}
+
+sec_login_blackscreen() {
+  hr "6. SDDM и чёрный экран при входе (~3 сек)"
+  printf '  sddm: enabled=%s active=%s\n' "$(svc_en sddm)" "$(svc_act sddm)"
+  for dm in greetd gdm lightdm; do
+    systemctl is-enabled "$dm" >/dev/null 2>&1 && note "Включён также/вместо: $dm"
+  done
+  sh_try "ls /etc/sddm.conf /etc/sddm.conf.d/"
+  [ -d /etc/sddm.conf.d ] && sh_try "grep -rhE '^(Current|Session|DisplayServer|User|CursorTheme|Font)' /etc/sddm.conf /etc/sddm.conf.d/"
+  sh_try "ls /usr/share/sddm/themes/"
+  echo "-- Журнал: читаем текущую загрузку (если нет прав — просто пропустим)"
+  if have journalctl && journalctl -b -n1 >/dev/null 2>&1; then
+    echo "  sddm (первые/последние события, монотонное время):"
+    journalctl -b -u sddm -o short-monotonic --no-pager 2>/dev/null | sed -n '1,12p;$p' | sed 's/^/    /' | cut -c1-200
+    echo "  Ядро: nvidia / drm / fbcon / efifb / simpledrm:"
+    journalctl -b -k -o short-monotonic --no-pager 2>/dev/null | grep -Ei 'nvidia|nvidia-drm|\[drm\]|fbcon|efifb|simpledrm' | head -n 25 | sed 's/^/    /' | cut -c1-200
+    echo "  Запуск Hyprland и сессии (user journal):"
+    journalctl -b -o short-monotonic --no-pager 2>/dev/null | grep -Ei 'hyprland|aquamarine|xdg-desktop-portal|sddm-helper' | head -n 15 | sed 's/^/    /' | cut -c1-200
+    echo "  Ошибки уровня err и выше за эту загрузку (первые 15):"
+    journalctl -b -p err --no-pager 2>/dev/null | head -n 15 | sed 's/^/    /' | cut -c1-200
+  else
+    note "journalctl недоступен без прав. Добавить себя в группу: sudo usermod -aG systemd-journal \$USER (после перелогина). Диагностика черного экрана без логов будет гаданием."
+  fi
+  echo "-- Лог Hyprland (если есть)"
+  local hl; hl="$(ls -1t "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"/hypr/*/hyprland.log 2>/dev/null | head -n1)"
+  if [ -n "$hl" ]; then
+    note "Лог: $hl"
+    grep -Ei 'error|warn|nvidia|explicit|failed' "$hl" | head -n 20 | sed 's/^/    /' | cut -c1-200
+  else
+    note "hyprland.log не найден (нет активной/прошлой сессии в /run/user)"
+  fi
+}
+
+sec_services() {
+  hr "7. Службы и звук/сеть/сон"
+  printf '  NetworkManager: enabled=%s active=%s\n' "$(svc_en NetworkManager)" "$(svc_act NetworkManager)"
+  for u in pipewire pipewire-pulse wireplumber xdg-desktop-portal xdg-desktop-portal-hyprland hyprpolkitagent hypridle; do
+    printf '  user:%-30s active=%s\n' "$u" "$(svc_user_act "$u")"
+  done
+  printf '  bluetooth.service: enabled=%s (должен быть выключен/отсутствовать)\n' "$(svc_en bluetooth)"
+  sh_try "cat /sys/power/state"
+  sh_try "cat /sys/power/mem_sleep"
+  sh_try "loginctl show-session self -p Type -p Desktop -p State"
+}
+
+sec_shell() {
+  hr "8. Shell, шрифты, разработка"
+  have zsh && note "zsh: $(zsh --version)"
+  [ -d "$HOME/.oh-my-zsh" ] && note "Oh My Zsh: найден (~/.oh-my-zsh)" || note "Oh My Zsh: не найден"
+  [ -d "$HOME/.oh-my-zsh/custom/themes/powerlevel10k" ] && note "Powerlevel10k: найден (как тема OMZ)"
+  [ -f "$HOME/.p10k.zsh" ] && note "~/.p10k.zsh: есть"
+  [ -f "$HOME/.zshrc" ] && note "~/.zshrc: есть, $(wc -l < "$HOME/.zshrc") строк (будет сохранён в бэкап)" || note "~/.zshrc: нет"
+  sh_try "fc-list | grep -Ei 'nerd|jetbrains|meslo' | cut -d: -f2 | sort -u"
+  for c in fastfetch git gh docker node npm fzf zoxide eza bat rg btop code firefox kitty dolphin; do
+    if have "$c"; then printf '  %-10s %s\n' "$c" "$("$c" --version 2>/dev/null | head -n1 | cut -c1-70)"; else printf '  %-10s —\n' "$c"; fi
+  done
+  note "Docker-демон: enabled=$(svc_en docker); ты в группе docker: $(id -nG | tr ' ' '\n' | grep -qx docker && echo да || echo нет)"
+}
+
+sec_existing_configs() {
+  hr "9. Уже существующие конфиги (будут бэкапиться перед заменой)"
+  local c
+  for c in hypr waybar rofi kitty swaync gtk-3.0 gtk-4.0 fastfetch btop; do
+    if [ -e "$HOME/.config/$c" ]; then
+      printf '  ~/.config/%-12s есть  (%s файлов)\n' "$c" "$(find "$HOME/.config/$c" -type f 2>/dev/null | wc -l)"
+    else
+      printf '  ~/.config/%-12s —\n' "$c"
+    fi
+  done
+  for f in .zshrc .p10k.zsh .gitconfig; do
+    [ -e "$HOME/$f" ] && printf '  ~/%-18s есть\n' "$f" || printf '  ~/%-18s —\n' "$f"
+  done
+  [ -d "$HOME/.config/Code" ] && note "VS Code: пользовательский профиль уже есть (~/.config/Code) — его не перезапишем без бэкапа"
+  [ -d "$HOME/Pictures/Wallpapers" ] && note "~/Pictures/Wallpapers есть: $(ls "$HOME/Pictures/Wallpapers" 2>/dev/null | wc -l) файл(ов)"
+  [ -d "$HOME/.config/northling" ] && note "Найден прошлый ~/.config/northling (повторный запуск проекта?)"
+}
+
+sec_footer() {
+  hr "Готово"
+  echo "Отправь файл целиком: $OUT"
+  echo "(Перед отправкой можешь просмотреть его глазами — внутри нет паролей и сетевых адресов, но имя пользователя и хоста может быть.)"
+}
+
+main() {
+  sec_header
+  sec_system
+  sec_dualboot
+  sec_packages
+  sec_hyprland
+  sec_nvidia
+  sec_login_blackscreen
+  sec_services
+  sec_shell
+  sec_existing_configs
+  sec_footer
+}
+
+main 2>&1 | sed "s|$HOME|~|g" | tee "$OUT"
+printf '\nОтчёт сохранён: %s\n' "$OUT" >&2

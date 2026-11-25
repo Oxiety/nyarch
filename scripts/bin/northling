@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# northling — единая команда управления Northling Arch.
+#   northling update      обновить систему и конфиги
+#   northling doctor      проверить, что всё работает
+#   northling wallpaper   выбрать обои
+#   northling install     запустить установщик заново (безопасно)
+#   northling uninstall   удалить конфиги проекта (вернёт твои прежние из бэкапа)
+#   northling diag        диагностика системы (только чтение)
+#   northling version | path
+conf="${XDG_CONFIG_HOME:-$HOME/.config}/northling"
+repo="$(cat "$conf/repo-path" 2>/dev/null)"
+here="$(dirname "$(readlink -f "$0")")"
+if [ ! -d "$repo" ]; then
+  echo "Не найдена папка проекта Northling Arch (записана в $conf/repo-path)." >&2
+  echo "Зайди в папку проекта и запусти:  bash install.sh" >&2
+  exit 1
+fi
+cmd="${1:-help}"; [ $# -gt 0 ] && shift
+case "$cmd" in
+  install)           exec bash "$repo/install.sh" "$@" ;;
+  update|upgrade)    exec bash "$repo/update.sh" "$@" ;;
+  uninstall)         exec bash "$repo/uninstall.sh" "$@" ;;
+  doctor|check)      exec bash "$repo/installer/verify.sh" "$@" ;;
+  wallpaper|wall)    [ $# -eq 0 ] && set -- --menu; exec "$here/northling-wallpaper" "$@" ;;
+  diag)              exec "$here/northling-diag" "$@" ;;
+  version|-v)        echo "Northling Arch $(cat "$repo/VERSION")" ;;
+  path)              echo "$repo" ;;
+  *)                 sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//' ;;
+esac

@@ -1,0 +1,13 @@
+# Northling Arch — packages/desktop.txt: приложения (всегда ставится)
+firefox
+dolphin
+kitty
+vlc
+mpv
+ark
+
+# Оформление и интеграция Dolphin вне Plasma
+breeze
+breeze-icons
+archlinux-xdg-menu        # без него «Открыть с помощью…» в Dolphin пустое
+papirus-icon-theme

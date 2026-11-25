@@ -9,12 +9,13 @@
 
     "modules-left": ["custom/launcher", "hyprland/workspaces", "hyprland/window"],
     "modules-center": ["clock"],
-    "modules-right": ["hyprland/language", "pulseaudio", "cpu", "memory", "custom/gpu", "network", "tray", "custom/power"],
+    "modules-right": ["custom/notification", "hyprland/language", "pulseaudio", "cpu", "memory", "custom/gpu", "network", "tray", "custom/power"],
 
     "custom/launcher": {
-        "format": "◆ nyarch",
+        "format": "◆ northling",
         "tooltip": false,
-        "on-click": "wofi --show drun"
+        "on-click": "rofi -show drun",
+        "on-click-right": "~/.local/bin/northling-wallpaper --menu"
     },
 
     "hyprland/workspaces": {
@@ -30,15 +31,37 @@
     },
 
     "clock": {
-        "format": "{:%H:%M}",
-        "format-alt": "{:%A, %d %B}",
+        "format": "{:%a, %d %b  ·  %H:%M}",
+        "format-alt": "{:%A, %d %B %Y  ·  %H:%M:%S}",
+        "interval": 1,
         "tooltip-format": "<tt>{calendar}</tt>",
         "calendar": {
             "mode": "month",
             "format": {
-                "today": "<span color='#2ee6c8'><b>{}</b></span>"
+                "today": "<span color='#A78BFA'><b>{}</b></span>"
             }
         }
+    },
+
+    "custom/notification": {
+        "tooltip": false,
+        "format": "{icon}",
+        "format-icons": {
+            "notification": "◉",
+            "none": "○",
+            "dnd-notification": "⊘",
+            "dnd-none": "⊘",
+            "inhibited-notification": "◉",
+            "inhibited-none": "○",
+            "dnd-inhibited-notification": "⊘",
+            "dnd-inhibited-none": "⊘"
+        },
+        "return-type": "json",
+        "exec-if": "which swaync-client",
+        "exec": "swaync-client -swb",
+        "on-click": "swaync-client -t -sw",
+        "on-click-right": "swaync-client -d -sw",
+        "escape": true
     },
 
     "hyprland/language": {
@@ -48,8 +71,8 @@
     },
 
     "pulseaudio": {
-        "format": "<span color='#5f8f8a'>vol</span> {volume}%",
-        "format-muted": "<span color='#ff7a9c'>mute</span>",
+        "format": "<span color='#9E94CD'>vol</span> {volume}%",
+        "format-muted": "<span color='#F27A9C'>mute</span>",
         "scroll-step": 2,
         "on-click": "pavucontrol",
         "on-click-right": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
@@ -58,13 +81,13 @@
 
     "cpu": {
         "interval": 3,
-        "format": "<span color='#5f8f8a'>cpu</span> {usage}%",
+        "format": "<span color='#9E94CD'>cpu</span> {usage}%",
         "tooltip": false
     },
 
     "memory": {
         "interval": 5,
-        "format": "<span color='#5f8f8a'>ram</span> {percentage}%",
+        "format": "<span color='#9E94CD'>ram</span> {percentage}%",
         "tooltip-format": "{used:0.1f} / {total:0.1f} GiB"
     },
 
@@ -77,9 +100,9 @@
 
     "network": {
         "interval": 5,
-        "format-wifi": "<span color='#5f8f8a'>wifi</span> {signalStrength}%",
-        "format-ethernet": "<span color='#5f8f8a'>net</span> up",
-        "format-disconnected": "<span color='#ff7a9c'>offline</span>",
+        "format-wifi": "<span color='#9E94CD'>wifi</span> {signalStrength}%",
+        "format-ethernet": "<span color='#9E94CD'>net</span> up",
+        "format-disconnected": "<span color='#F27A9C'>offline</span>",
         "tooltip-format": "{ifname}  {ipaddr}",
         "on-click": "nm-connection-editor"
     },

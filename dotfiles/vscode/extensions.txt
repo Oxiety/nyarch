@@ -1,0 +1,12 @@
+# Рекомендуемые расширения для Northling Midnight (НИЧЕГО автоматически не ставится).
+# Ставь только нужные:   code --install-extension <id>
+# Или в VS Code: Ctrl+Shift+X → поиск по id.
+
+esbenp.prettier-vscode        # форматирование (после установки можно задать форматтером по умолчанию)
+dbaeumer.vscode-eslint        # ESLint для JavaScript/TypeScript
+editorconfig.editorconfig     # единые отступы в проекте
+eamodio.gitlens               # история и авторы строк в Git
+usernamehw.errorlens          # ошибки прямо в строке кода
+ms-azuretools.vscode-docker   # Docker (если ставил)
+PKief.material-icon-theme     # значки файлов
+MS-CEINTL.vscode-language-pack-ru  # русский интерфейс

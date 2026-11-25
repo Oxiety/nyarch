@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# Power menu through wofi
-choice=$(printf 'Выключить\nПерезагрузить\nСон\nВыйти из сессии' | wofi --dmenu --prompt "Питание" --width 320 --height 260 --cache-file /dev/null)
+# Меню питания через rofi
+choice=$(printf 'Заблокировать\nСон\nПерезагрузить\nВыключить\nВыйти из сессии' | rofi -dmenu -i -p "Питание" -theme-str 'window {width: 340px;} listview {lines: 5;}')
 
 case "$choice" in
-    "Выключить")        systemctl poweroff ;;
-    "Перезагрузить")    systemctl reboot ;;
+    "Заблокировать")    pidof hyprlock || hyprlock ;;
     "Сон")              systemctl suspend ;;
-    "Выйти из сессии")  hyprctl dispatch 'hl.dsp.exit()' ;;
+    "Перезагрузить")    systemctl reboot ;;
+    "Выключить")        systemctl poweroff ;;
+    "Выйти из сессии")  command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()' ;;
 esac

@@ -1,0 +1,3 @@
+# Northling Arch — packages/optional.txt: Docker (только если выбрано в установщике)
+docker
+docker-compose

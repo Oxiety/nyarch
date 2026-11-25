@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Northling: обновить
+Comment=Обновить систему и конфиги Northling Arch
+Exec=kitty --title "Northling: обновление" @HOME@/.local/bin/northling-run update
+Icon=system-software-update
+Terminal=false
+Categories=System;

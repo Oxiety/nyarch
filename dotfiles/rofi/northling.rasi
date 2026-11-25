@@ -1,0 +1,73 @@
+/* Northling Midnight — тема rofi */
+* {
+    bg:        #0E0A24f0;
+    bg-alt:    #1C1155;
+    sel:       #34304F;
+    fg:        #E5E7F5;
+    fg-dim:    #9E94CD;
+    accent:    #A78BFA;
+    accent2:   #82BFFF;
+
+    background-color: transparent;
+    text-color:       @fg;
+}
+
+window {
+    width: 560px;
+    background-color: @bg;
+    border: 2px;
+    border-color: @accent;
+    border-radius: 16px;
+    padding: 14px;
+}
+
+mainbox {
+    spacing: 10px;
+    children: [ inputbar, listview ];
+}
+
+inputbar {
+    background-color: @bg-alt;
+    border-radius: 12px;
+    padding: 10px 14px;
+    spacing: 8px;
+    children: [ prompt, entry ];
+}
+
+prompt {
+    text-color: @accent;
+}
+
+entry {
+    placeholder: "Начни вводить…";
+    placeholder-color: @fg-dim;
+}
+
+listview {
+    lines: 8;
+    columns: 1;
+    fixed-height: true;
+    scrollbar: false;
+    spacing: 4px;
+}
+
+element {
+    padding: 8px 12px;
+    border-radius: 10px;
+    spacing: 10px;
+}
+
+element selected.normal {
+    background-color: @sel;
+    text-color: @fg;
+    border: 1px;
+    border-color: @accent;
+}
+
+element-icon {
+    size: 26px;
+}
+
+element-text {
+    vertical-align: 0.5;
+}
