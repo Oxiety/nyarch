@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Запуск Waybar с учётом режима «Liquid Glass» (northling glass on|off).
+flag="${XDG_CONFIG_HOME:-$HOME/.config}/northling/glass"
+base="$HOME/.config/waybar"
+if [ -f "$flag" ] && [ -f "$base/style.css" ] && [ -f "$base/glass.css" ]; then
+  out="${XDG_RUNTIME_DIR:-/tmp}/northling-waybar-glass.css"
+  cat "$base/style.css" "$base/glass.css" > "$out" && exec waybar -s "$out"
+fi
+exec waybar

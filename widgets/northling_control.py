@@ -4,6 +4,7 @@
 import getpass, os, re, subprocess, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import nl_data as data
 
 import gi
 gi.require_version("Gtk", "3.0")
@@ -106,6 +107,7 @@ class Control(Gtk.Window):
     def __init__(self):
         super().__init__(title="Northling Control")
         GtkLayerShell.init_for_window(self)
+        GtkLayerShell.set_namespace(self, "northling-control")
         GtkLayerShell.set_layer(self, GtkLayerShell.Layer.OVERLAY)
         GtkLayerShell.set_keyboard_mode(self, GtkLayerShell.KeyboardMode.EXCLUSIVE)
         for edge in (GtkLayerShell.Edge.TOP, GtkLayerShell.Edge.BOTTOM, GtkLayerShell.Edge.LEFT, GtkLayerShell.Edge.RIGHT):
@@ -120,6 +122,10 @@ class Control(Gtk.Window):
         try:
             p.load_from_path(os.path.join(HERE, "control.css"))
             Gtk.StyleContext.add_provider_for_screen(scr, p, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+            if data.glass_on():
+                g = Gtk.CssProvider()
+                g.load_from_path(os.path.join(HERE, "glass.css"))
+                Gtk.StyleContext.add_provider_for_screen(scr, g, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION + 1)
         except Exception as e:
             print("control.css:", e, file=sys.stderr)
 
@@ -153,6 +159,7 @@ class Control(Gtk.Window):
             Tile("󰂛", "Не беспокоить", lambda: sh(["swaync-client", "-D"])[1] == "true", lambda: spawn(["swaync-client", "-d", "-sw"])),
             Tile("󰌵", "Ночной режим", lambda: sh(["pgrep", "-x", "hyprsunset"])[0] == 0, self.toggle_night),
             Tile("󰊖", "Игровой режим", lambda: sh([BIN + "northling-gamemode", "status"])[1] == "on", lambda: spawn([BIN + "northling-gamemode", "toggle"])),
+            Tile("󰔡", "Liquid Glass", data.glass_on, lambda: spawn([BIN + "northling-glass", "toggle"])),
             Tile("󰝟", "Звук", lambda: "MUTED" not in sh(["wpctl", "get-volume", SINK])[1], lambda: spawn(["wpctl", "set-mute", SINK, "toggle"])),
             Tile("󰍭", "Микрофон", lambda: "MUTED" not in sh(["wpctl", "get-volume", SRC])[1], lambda: spawn(["wpctl", "set-mute", SRC, "toggle"])),
         ]

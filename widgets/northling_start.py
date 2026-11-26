@@ -72,7 +72,8 @@ POWER = [
 ]
 
 QUICK = [
-    ("Перезапустить панель", ["sh", "-c", "pkill waybar; sleep 0.3; waybar"]),
+    ("Liquid Glass вкл/выкл", [os.path.expanduser("~/.local/bin/northling-glass"), "toggle"]),
+    ("Перезапустить панель", ["sh", "-c", "pkill -x waybar; sleep 0.3; ~/.local/bin/northling-waybar"]),
     ("Перезагрузить Hyprland", ["hyprctl", "reload"]),
     ("Обновить систему", [TERMINAL, "-e", "northling", "update", "--fast"]),
     ("Диагностика", [TERMINAL, "-e", "northling", "diag"]),
@@ -280,6 +281,7 @@ class Start(Gtk.Window):
         self.wall_loaded = False
 
         GtkLayerShell.init_for_window(self)
+        GtkLayerShell.set_namespace(self, "northling-start")
         GtkLayerShell.set_layer(self, GtkLayerShell.Layer.OVERLAY)
         GtkLayerShell.set_keyboard_mode(self, GtkLayerShell.KeyboardMode.EXCLUSIVE)
         for edge in (GtkLayerShell.Edge.TOP, GtkLayerShell.Edge.BOTTOM, GtkLayerShell.Edge.LEFT, GtkLayerShell.Edge.RIGHT):
@@ -348,6 +350,10 @@ class Start(Gtk.Window):
         try:
             p.load_from_path(os.path.join(HERE, "start.css"))
             Gtk.StyleContext.add_provider_for_screen(Gdk.Screen.get_default(), p, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+            if data.glass_on():
+                g = Gtk.CssProvider()
+                g.load_from_path(os.path.join(HERE, "glass.css"))
+                Gtk.StyleContext.add_provider_for_screen(Gdk.Screen.get_default(), g, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION + 1)
         except Exception as e:
             print("start.css:", e, file=sys.stderr)
 

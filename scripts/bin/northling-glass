@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Режим «Liquid Glass»: northling glass on|off|toggle|status
+# Стеклянные полупрозрачные панели с размытием фона и бликами. Выключен по умолчанию.
+flag="${XDG_CONFIG_HOME:-$HOME/.config}/northling/glass"
+note() { command -v notify-send >/dev/null && notify-send -a Northling "Liquid Glass" "$1"; echo "$1"; }
+apply() {
+  hyprctl reload >/dev/null 2>&1
+  pkill -x waybar; sleep 0.3; setsid -f "$HOME/.local/bin/northling-waybar" >/dev/null 2>&1 </dev/null
+  "$HOME/.local/bin/northling-widgets" restart >/dev/null 2>&1
+  "$HOME/.local/bin/northling-dock" restart >/dev/null 2>&1
+}
+case "${1:-toggle}" in
+  on)  mkdir -p "$(dirname "$flag")"; touch "$flag"; apply; note "Включён. Если размытия нет — перезайди в сессию (Hyprland применяет правила слоёв при загрузке конфига)" ;;
+  off) rm -f "$flag"; apply; note "Выключен" ;;
+  toggle) [ -f "$flag" ] && "$0" off || "$0" on ;;
+  status) [ -f "$flag" ] && echo on || echo off ;;
+  *) echo "использование: northling glass on|off|toggle|status"; exit 2 ;;
+esac

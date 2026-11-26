@@ -14,6 +14,14 @@ DEFAULT_CONFIG = {
 }
 
 
+GLASS_FLAG = os.path.join(os.environ.get("XDG_CONFIG_HOME", os.path.expanduser("~/.config")), "northling", "glass")
+
+
+def glass_on():
+    """Включён ли режим «Liquid Glass» (northling glass on)."""
+    return os.path.exists(GLASS_FLAG)
+
+
 def load_config(path=CONF_PATH):
     cfg = json.loads(json.dumps(DEFAULT_CONFIG))
     try:

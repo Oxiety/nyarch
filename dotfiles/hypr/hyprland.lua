@@ -9,6 +9,10 @@
 -- =============================================================================
 
 local HOME = os.getenv("HOME")
+-- Режим «Liquid Glass» (northling glass on): флаг-файл; по умолчанию выключен.
+local glass_f = io.open(HOME .. "/.config/northling/glass", "r")
+local GLASS = glass_f ~= nil
+if glass_f then glass_f:close() end
 
 -- ── A. Программы ─────────────────────────────────────────────────────────────
 local terminal    = "kitty"
@@ -60,10 +64,10 @@ hl.config({
     },
 
     decoration = {
-        rounding       = 16,
+        rounding       = GLASS and 22 or 16,
         rounding_power = 2,
         active_opacity   = 1.0,
-        inactive_opacity = 0.94,
+        inactive_opacity = GLASS and 0.90 or 0.94,
         shadow = {
             enabled      = true,
             range        = 14,
@@ -72,9 +76,11 @@ hl.config({
         },
         blur = {
             enabled   = true,
-            size      = 8,
-            passes    = 3,
-            vibrancy  = 0.2,
+            size      = GLASS and 14 or 8,
+            passes    = GLASS and 4 or 3,
+            vibrancy  = GLASS and 0.45 or 0.2,
+            contrast  = GLASS and 1.1 or 1.0,
+            brightness = GLASS and 1.08 or 1.0,
             noise     = 0.015,
         },
     },
@@ -200,13 +206,21 @@ hl.window_rule({
     float = true,
 })
 
+-- Размытие под панелями и виджетами (только в режиме Liquid Glass).
+-- pcall: если в этой версии Hyprland имя функции другое — конфиг не сломается, просто не будет размытия.
+if GLASS then
+    for _, ns in ipairs({ "waybar", "northling-widgets", "northling-start", "northling-control", "northling-dock", "swaync-control-center", "swaync-notification-window" }) do
+        pcall(function() hl.layer_rule({ name = "northling-glass-" .. ns, match = { namespace = "^" .. ns .. "$" }, blur = true, ignore_alpha = 0.05 }) end)
+    end
+end
+
 -- ── H. Автозапуск ────────────────────────────────────────────────────────────
 -- Обои: swaybg читает симлинк ~/.config/northling/wallpaper — меняй картинку командой
 -- northling-wallpaper, этот файл править не нужно.
 hl.on("hyprland.start", function()
     hl.exec_cmd("swaybg -i " .. HOME .. "/.config/northling/wallpaper -m fill")
     hl.exec_cmd("swaync")
-    hl.exec_cmd("waybar")
+    hl.exec_cmd(HOME .. "/.local/bin/northling-waybar")
     hl.exec_cmd(HOME .. "/.local/bin/northling-widgets start")
     hl.exec_cmd(HOME .. "/.local/bin/northling-dock start")
     hl.exec_cmd("sh -c 'command -v kdeconnect-indicator >/dev/null && kdeconnect-indicator'")

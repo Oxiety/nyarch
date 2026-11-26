@@ -3,6 +3,9 @@
 Прячется у края; наведи мышь на нижний край — выедет. Закреплённые — в ~/.config/northling/dock.json."""
 import json, os, subprocess, sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import nl_data as data
+
 import gi
 gi.require_version("Gtk", "3.0")
 gi.require_version("Gdk", "3.0")
@@ -89,6 +92,7 @@ class Dock(Gtk.Window):
             except Exception:
                 continue
         GtkLayerShell.init_for_window(self)
+        GtkLayerShell.set_namespace(self, "northling-dock")
         GtkLayerShell.set_layer(self, GtkLayerShell.Layer.TOP)
         GtkLayerShell.set_anchor(self, GtkLayerShell.Edge.BOTTOM, True)
         GtkLayerShell.set_exclusive_zone(self, 0)
@@ -101,6 +105,10 @@ class Dock(Gtk.Window):
         try:
             p.load_from_path(os.path.join(HERE, "dock.css"))
             Gtk.StyleContext.add_provider_for_screen(scr, p, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+            if data.glass_on():
+                g = Gtk.CssProvider()
+                g.load_from_path(os.path.join(HERE, "glass.css"))
+                Gtk.StyleContext.add_provider_for_screen(scr, g, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION + 1)
         except Exception as e:
             print("dock.css:", e, file=sys.stderr)
 
