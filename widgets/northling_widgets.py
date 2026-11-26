@@ -352,10 +352,6 @@ def main():
     css = Gtk.CssProvider()
     css.load_from_path(os.path.join(HERE, "style.css"))
     Gtk.StyleContext.add_provider_for_screen(Gdk.Screen.get_default(), css, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
-    if data.glass_on():
-        g = Gtk.CssProvider()
-        g.load_from_path(os.path.join(HERE, "glass.css"))
-        Gtk.StyleContext.add_provider_for_screen(Gdk.Screen.get_default(), g, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION + 1)
     App()
     Gtk.main()
 

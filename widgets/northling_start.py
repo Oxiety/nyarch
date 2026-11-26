@@ -72,7 +72,6 @@ POWER = [
 ]
 
 QUICK = [
-    ("Liquid Glass вкл/выкл", [os.path.expanduser("~/.local/bin/northling-glass"), "toggle"]),
     ("Перезапустить панель", ["sh", "-c", "pkill -x waybar; sleep 0.3; ~/.local/bin/northling-waybar"]),
     ("Перезагрузить Hyprland", ["hyprctl", "reload"]),
     ("Обновить систему", [TERMINAL, "-e", "northling", "update", "--fast"]),
@@ -350,10 +349,6 @@ class Start(Gtk.Window):
         try:
             p.load_from_path(os.path.join(HERE, "start.css"))
             Gtk.StyleContext.add_provider_for_screen(Gdk.Screen.get_default(), p, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
-            if data.glass_on():
-                g = Gtk.CssProvider()
-                g.load_from_path(os.path.join(HERE, "glass.css"))
-                Gtk.StyleContext.add_provider_for_screen(Gdk.Screen.get_default(), g, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION + 1)
         except Exception as e:
             print("start.css:", e, file=sys.stderr)
 
@@ -368,7 +363,8 @@ class Start(Gtk.Window):
         self.entry = Gtk.SearchEntry()
         self.entry.set_placeholder_text("Поиск: приложения, бинды, калькулятор…")
         add_classes(self.entry, "start-search")
-        self.entry.connect("search-changed", lambda e: self.on_search(e.get_text()))
+        self._debounce = 0
+        self.entry.connect("search-changed", self.on_search_changed)
         self.entry.connect("activate", lambda e: self.activate_selected())
         right.pack_start(self.entry, False, False, 0)
         box.pack_start(right, True, True, 0)
@@ -449,6 +445,18 @@ class Start(Gtk.Window):
         b.connect("clicked", lambda *_: self.launch(a))
         return b
 
+    def on_search_changed(self, e):
+        # ждём короткую паузу в наборе — список не перестраивается на каждую букву
+        if self._debounce:
+            GLib.source_remove(self._debounce)
+        self._debounce = GLib.timeout_add(90, self._debounced, e.get_text())
+        return False
+
+    def _debounced(self, text):
+        self._debounce = 0
+        self.on_search(text)
+        return False
+
     def on_search(self, text):
         if text.strip():
             self.stack.set_visible_child_name("apps")
@@ -478,7 +486,7 @@ class Start(Gtk.Window):
                 if s is not None:
                     scored.append((s, a["name"].lower(), a))
             scored.sort(key=lambda x: (x[0], x[1]))
-            for _, _, a in scored[:30]:
+            for _, _, a in scored[:40]:
                 items.append(("app", None, a["name"], a["id"], a))
             for title, rows in filter_binds(q)[:3]:
                 for keys, desc in rows[:3]:
@@ -487,9 +495,9 @@ class Start(Gtk.Window):
                 items.append(("web", "󰖟", q, "Ничего не нашёл — искать в интернете", q))
             self.res_title.set_text("РЕЗУЛЬТАТЫ")
         else:
-            for a in self.apps:
+            for a in self.apps[:80]:
                 items.append(("app", None, a["name"], "", a))
-            self.res_title.set_text("ВСЕ ПРИЛОЖЕНИЯ")
+            self.res_title.set_text(f"ВСЕ ПРИЛОЖЕНИЯ  ·  показано 80 из {len(self.apps)} — наберите название")
         for it in items:
             row = self.make_row(it)
             self.list.add(row)

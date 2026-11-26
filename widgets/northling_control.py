@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Northling Control — центр управления: громкость, микрофон, яркость, Wi-Fi, «не беспокоить»,
 ночной режим, игровой режим. Открывается по Super+A, Esc или клик мимо — закрыть."""
-import getpass, os, re, subprocess, sys
+import getpass, os, re, shutil, subprocess, sys, threading
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import nl_data as data
@@ -52,7 +52,7 @@ def parse_brightness(text):
 
 
 def have(cmd):
-    return sh(["sh", "-c", f"command -v {cmd}"])[0] == 0
+    return shutil.which(cmd) is not None
 
 
 def add_classes(w, css):
@@ -87,20 +87,28 @@ class Tile(Gtk.Button):
         self.refresh()
 
     def refresh(self):
-        try:
-            on = bool(self.getter())
-        except Exception:
-            on = False
+        """Состояние читаем в отдельном потоке: subprocess в основном потоке тормозил открытие окна."""
+        def work():
+            try:
+                on = bool(self.getter())
+            except Exception:
+                on = False
+            GLib.idle_add(self._apply, on)
+        threading.Thread(target=work, daemon=True).start()
+        return False
+
+    def _apply(self, on):
         ctx = self.get_style_context()
         (ctx.add_class if on else ctx.remove_class)("tile-on")
         self.sub.set_text("Вкл" if on else "Выкл")
+        return False
 
     def on_click(self, *_):
         try:
             self.toggler()
         except Exception as e:
             print("tile:", e, file=sys.stderr)
-        GLib.timeout_add(450, lambda: (self.refresh(), False)[1])
+        GLib.timeout_add(450, self.refresh)
 
 
 class Control(Gtk.Window):
@@ -122,10 +130,6 @@ class Control(Gtk.Window):
         try:
             p.load_from_path(os.path.join(HERE, "control.css"))
             Gtk.StyleContext.add_provider_for_screen(scr, p, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
-            if data.glass_on():
-                g = Gtk.CssProvider()
-                g.load_from_path(os.path.join(HERE, "glass.css"))
-                Gtk.StyleContext.add_provider_for_screen(scr, g, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION + 1)
         except Exception as e:
             print("control.css:", e, file=sys.stderr)
 
@@ -146,11 +150,12 @@ class Control(Gtk.Window):
         self.card.pack_start(lbl("Центр управления", "cc-title"), False, False, 0)
         self.card.pack_start(lbl(getpass.getuser(), "cc-sub"), False, False, 0)
         self.sliders = []
-        self.card.pack_start(self.slider("󰕾", "Громкость", self.get_vol(SINK), lambda v: self.set_vol(SINK, v)), False, False, 0)
-        self.card.pack_start(self.slider("󰍬", "Микрофон", self.get_vol(SRC), lambda v: self.set_vol(SRC, v)), False, False, 0)
-        b = self.get_bright()
-        if b is not None:
-            self.card.pack_start(self.slider("󰃟", "Яркость", b, lambda v: spawn(["brightnessctl", "set", f"{max(1, int(v*100))}%"])), False, False, 0)
+        self.card.pack_start(self.slider("󰕾", "Громкость", 0.0, lambda v: self.set_vol(SINK, v)), False, False, 0)
+        self.card.pack_start(self.slider("󰍬", "Микрофон", 0.0, lambda v: self.set_vol(SRC, v)), False, False, 0)
+        if have("brightnessctl"):
+            self.card.pack_start(self.slider("󰃟", "Яркость", 0.0, lambda v: spawn(["brightnessctl", "set", f"{max(1, int(v*100))}%"]), key="bright"), False, False, 0)
+        # значения громкости/яркости подтянем фоном, окно уже на экране
+        threading.Thread(target=self._load_levels, daemon=True).start()
 
         grid = Gtk.Grid(column_spacing=10, row_spacing=10, column_homogeneous=True)
         self.tiles = [
@@ -159,7 +164,6 @@ class Control(Gtk.Window):
             Tile("󰂛", "Не беспокоить", lambda: sh(["swaync-client", "-D"])[1] == "true", lambda: spawn(["swaync-client", "-d", "-sw"])),
             Tile("󰌵", "Ночной режим", lambda: sh(["pgrep", "-x", "hyprsunset"])[0] == 0, self.toggle_night),
             Tile("󰊖", "Игровой режим", lambda: sh([BIN + "northling-gamemode", "status"])[1] == "on", lambda: spawn([BIN + "northling-gamemode", "toggle"])),
-            Tile("󰔡", "Liquid Glass", data.glass_on, lambda: spawn([BIN + "northling-glass", "toggle"])),
             Tile("󰝟", "Звук", lambda: "MUTED" not in sh(["wpctl", "get-volume", SINK])[1], lambda: spawn(["wpctl", "set-mute", SINK, "toggle"])),
             Tile("󰍭", "Микрофон", lambda: "MUTED" not in sh(["wpctl", "get-volume", SRC])[1], lambda: spawn(["wpctl", "set-mute", SRC, "toggle"])),
         ]
@@ -179,6 +183,21 @@ class Control(Gtk.Window):
         self.connect("key-press-event", lambda w, e: (Gtk.main_quit(), True)[1] if e.keyval == Gdk.KEY_Escape else False)
         self.connect("destroy", lambda *_: Gtk.main_quit())
         self.show_all()
+
+    def _load_levels(self):
+        vals = {"vol": self.get_vol(SINK), "mic": self.get_vol(SRC), "bright": self.get_bright()}
+        GLib.idle_add(self._apply_levels, vals)
+
+    def _apply_levels(self, vals):
+        # слайдеры создаются по порядку: громкость, микрофон, [яркость]
+        keys = ["vol", "mic"] + (["bright"] if len(self.sliders) > 2 else [])
+        for sc, k in zip(self.sliders, keys):
+            v = vals.get(k)
+            if v is not None:
+                sc._quiet = True
+                sc.set_value(v)
+                sc._quiet = False
+        return False
 
     def on_click_outside(self, w, ev):
         a = self.card.get_allocation()
@@ -208,7 +227,7 @@ class Control(Gtk.Window):
         pct = parse_brightness(sh(["brightnessctl", "-m"])[1])
         return None if pct is None else pct / 100.0
 
-    def slider(self, glyph, title, value, setter):
+    def slider(self, glyph, title, value, setter, key=None):
         box = Gtk.Box(spacing=12)
         box.pack_start(lbl(glyph, "tile-glyph", 0.5), False, False, 0)
         v = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
@@ -217,7 +236,7 @@ class Control(Gtk.Window):
         sc.set_draw_value(False)
         sc.set_value(value)
         sc.set_size_request(250, -1)
-        sc.connect("value-changed", lambda s: setter(s.get_value()))
+        sc.connect("value-changed", lambda s: None if getattr(s, "_quiet", False) else setter(s.get_value()))
         add_classes(sc, "cc-scale")
         v.pack_start(sc, False, False, 0)
         box.pack_start(v, True, True, 0)

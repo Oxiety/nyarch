@@ -267,6 +267,25 @@ sec_existing_configs() {
   [ -d "$HOME/.config/northling" ] && note "Найден прошлый ~/.config/northling (повторный запуск проекта?)"
 }
 
+sec_network() {
+  hr "7b. Сеть и Steam (медленная загрузка при том, что браузер работает)"
+  sh_try "nmcli -t -f DEVICE,TYPE,STATE,CONNECTION device"
+  sh_try "resolvectl status 2>/dev/null | grep -E 'DNS Servers|Current DNS|DNSSEC|Protocols' | head -8 || true"
+  sh_try "cat /etc/resolv.conf | grep -v '^#' | head -5"
+  sh_try "sysctl net.ipv6.conf.all.disable_ipv6 net.ipv4.tcp_congestion_control 2>/dev/null"
+  sh_try "ip -br addr show scope global 2>/dev/null | head -4"
+  sh_try "ping -c 3 -W 2 store.steampowered.com 2>&1 | tail -2"
+  sh_try "ping -c 3 -W 2 1.1.1.1 2>&1 | tail -2"
+  sh_try "getent hosts cdn.akamai.steamstatic.com | head -2"
+  sh_try "ls ~/.steam/steam/steamapps/ 2>/dev/null | head -2; grep -E 'DownloadRegion|AllowDownloadsDuringGameplay' ~/.local/share/Steam/config/steam.cfg 2>/dev/null"
+  sh_try "df -h ~/.local/share/Steam 2>/dev/null | tail -1"
+}
+
+sec_sddm_files() {
+  hr "6b. Файлы конфигурации SDDM (кто включает экранную клавиатуру)"
+  sh_try "grep -vHE '^[[:space:]]*(#|\$)' /etc/sddm.conf.d/*.conf"
+}
+
 sec_footer() {
   hr "Готово"
   echo "Отправь файл целиком: $OUT"
@@ -281,7 +300,9 @@ main() {
   sec_hyprland
   sec_nvidia
   sec_login_blackscreen
+  sec_sddm_files
   sec_services
+  sec_network
   sec_shell
   sec_existing_configs
   sec_footer

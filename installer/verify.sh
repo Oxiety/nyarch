@@ -56,6 +56,10 @@ nl_verify() {
     [ "$(cat /sys/module/nvidia_drm/parameters/modeset 2>/dev/null)" = Y ] && vok "NVIDIA: DRM modeset включён" || vbad "NVIDIA: modeset выключен"
   fi
   { have pacman && pacman -Qq bluez >/dev/null 2>&1; } && vwarn "стоит bluez (от прошлой установки): Bluetooth тебе не нужен — можно убрать: sudo pacman -Rns bluez blueman"
+  systemctl is-enabled bluetooth >/dev/null 2>&1 && vwarn "служба bluetooth включена: sudo systemctl disable --now bluetooth"
+  [ -e /usr/share/dbus-1/services/org.knopwob.dunst.service ] && vwarn "конфликт уведомлений: стоит dunst — swaync из-за этого не может занять org.freedesktop.Notifications. Нужно: sudo pacman -Rns dunst (или оставь только один)"
+  [ -e /usr/share/dbus-1/services/org.kde.plasma.Notifications.service ] && vwarn "в системе есть служба уведомлений KDE Plasma — конфликтует со swaync (можно удалить пакет plasma-workspace, если не нужен)"
+  grep -qs 'InputMethod=[^[:space:]]' /etc/sddm.conf.d/*.conf 2>/dev/null && vwarn "в /etc/sddm.conf.d есть активный InputMethod (это экранная клавиатура на входе): northling update из TTY уберёт его" || true
 
   if [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ] && have hyprctl; then
     say "${C_B}Живая сессия Hyprland${C_RESET}"

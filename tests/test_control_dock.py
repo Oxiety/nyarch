@@ -33,14 +33,9 @@ nd.subprocess.run = lambda *a, **k: types.SimpleNamespace(stdout="[]", returncod
 nd.Dock()
 print("Control/Dock OK")
 
-import nl_data
-assert nl_data.glass_on() in (True, False)
-nl_data.GLASS_FLAG = "/tmp/nl-glass-flag-test"
-open(nl_data.GLASS_FLAG, "w").close(); assert nl_data.glass_on(); os.remove(nl_data.GLASS_FLAG); assert not nl_data.glass_on()
-assert os.path.getsize(os.path.join(ROOT, "glass.css")) > 500
-print("Glass OK")
 
 # ── Норт ──
+import nl_data
 import tempfile
 nd_ = tempfile.mkdtemp(); 
 for n in nl_data.MASCOT_NAMES[:3]:

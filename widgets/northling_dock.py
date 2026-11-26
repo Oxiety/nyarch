@@ -105,10 +105,6 @@ class Dock(Gtk.Window):
         try:
             p.load_from_path(os.path.join(HERE, "dock.css"))
             Gtk.StyleContext.add_provider_for_screen(scr, p, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
-            if data.glass_on():
-                g = Gtk.CssProvider()
-                g.load_from_path(os.path.join(HERE, "glass.css"))
-                Gtk.StyleContext.add_provider_for_screen(scr, g, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION + 1)
         except Exception as e:
             print("dock.css:", e, file=sys.stderr)
 

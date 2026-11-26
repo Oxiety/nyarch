@@ -6,7 +6,6 @@
 #   northling gamemode    игровой режим on|off
 #   northling control     центр управления (Super+A)
 #   northling mascot      Норт: сменить стикер на столе и экране блокировки
-#   northling glass       режим Liquid Glass on|off
 #   northling start       «Пуск»: поиск, бинды, настройки (Super+R)
 #   northling sddm        тема экрана входа: test|enable|disable
 #   northling doctor      проверить, что всё работает
@@ -36,7 +35,6 @@ case "$cmd" in
   gamemode|game)     exec "$here/northling-gamemode" "$@" ;;
   control|cc)        exec "$here/northling-control" "$@" ;;
   mascot|north)      exec "$here/northling-mascot" "$@" ;;
-  glass)             exec "$here/northling-glass" "$@" ;;
   dock)              exec "$here/northling-dock" "$@" ;;
   sddm)              exec bash "$repo/installer/sddm.sh" "$@" ;;
   diag)              exec bash "$here/northling-diag" "$@" ;;
