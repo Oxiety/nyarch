@@ -5,7 +5,7 @@ CACHE_DIR = os.path.join(os.environ.get("XDG_CACHE_HOME", os.path.expanduser("~/
 CONF_PATH = os.path.join(os.environ.get("XDG_CONFIG_HOME", os.path.expanduser("~/.config")), "northling", "widgets.json")
 
 DEFAULT_CONFIG = {
-    "clock":    {"enabled": True, "hour24": True},
+    "clock":    {"enabled": True, "style": "analog", "hour24": True},
     "calendar": {"enabled": True},
     "system":   {"enabled": True},
     "weather":  {"enabled": True, "city": "", "latitude": None, "longitude": None, "units": "metric"},

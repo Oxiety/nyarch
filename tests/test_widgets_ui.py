@@ -26,6 +26,9 @@ import northling_widgets as nw
 
 app = nw.App()
 app.tick_clock(); app.tick_system(); app.tick_player()
+area = mock.MagicMock(); area.get_allocated_width.return_value = 230; area.get_allocated_height.return_value = 230
+assert app.draw_clock(area, mock.MagicMock()) is False
+assert nw.add_classes is not None
 app.show_weather(nl_data.weather({}), None)
 app.show_weather(None, "не задан город")
 app.show_weather(None, "сеть")

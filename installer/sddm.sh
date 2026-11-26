@@ -49,7 +49,7 @@ sddm_conflicts() {
   for f in "$SDDM_ETC/sddm.conf" "$SDDM_ETC"/sddm.conf.d/*.conf; do
     [ -f "$f" ] || continue
     [ "$f" = "$SDDM_CONF" ] && continue
-    grep -qE '^[[:space:]]*Current[[:space:]]*=' "$f" 2>/dev/null && echo "$f"
+    grep -qE '^[[:space:]]*(Current[[:space:]]*=|InputMethod[[:space:]]*=[[:space:]]*[^[:space:]])' "$f" 2>/dev/null && echo "$f"
   done
 }
 
@@ -58,7 +58,7 @@ sddm_neutralize() {
   [ -n "$c" ] || return 0
   warn "Другие настройки SDDM уже задают тему и перебьют нашу:"
   while IFS= read -r f; do
-    [ -n "$f" ] && { printf '      %s   → %s\n' "$f" "$(grep -hE '^[[:space:]]*Current[[:space:]]*=' "$f" | head -n1)"; }
+    [ -n "$f" ] && { printf '      %s   → %s\n' "$f" "$(grep -hE '^[[:space:]]*(Current[[:space:]]*=|InputMethod[[:space:]]*=[[:space:]]*[^[:space:]])' "$f" | head -n1)"; }
   done <<<"$c"
   if ! ask "Закомментировать эти строки Current= (бэкап сохраню, при отключении темы верну)?" y; then
     warn "Оставил как есть — наша тема не применится, пока эти строки активны."; return 0
@@ -69,7 +69,7 @@ sddm_neutralize() {
     local bak; bak="$SDDM_BAK/$(basename "$f").$(date +%Y%m%d-%H%M%S).bak"
     run sudo cp -p "$f" "$bak"
     run sudo chmod a+r "$bak"
-    run sudo sed -i -E 's/^([[:space:]]*Current[[:space:]]*=.*)$/# northling: \1/' "$f"
+    run sudo sed -i -E 's/^([[:space:]]*(Current[[:space:]]*=|InputMethod[[:space:]]*=[[:space:]]*[^[:space:]]).*)$/# northling: \1/' "$f"
     [ "$DRY_RUN" = 1 ] || printf '%s\t%s\n' "$f" "$bak" >> "$SDDM_NEUT"
     ok "закомментировано в $f (бэкап: $(tilde "$bak"))"
   done <<<"$c"
@@ -79,7 +79,7 @@ sddm_enable() {
   run sudo rm -f "$SDDM_OLD_CONF"
   sddm_neutralize
   run sudo install -d -m 755 "$(dirname "$SDDM_CONF")"
-  printf '[Theme]\nCurrent=northling-midnight\n' | run sudo tee "$SDDM_CONF" >/dev/null
+  printf '[General]\nInputMethod=\n\n[Theme]\nCurrent=northling-midnight\n' | run sudo tee "$SDDM_CONF" >/dev/null
   ok "Тема включена: $SDDM_CONF (увидишь при следующем выходе из сессии или перезагрузке)"
   info "Если экран входа сломался: Ctrl+Alt+F3 → логин → northling sddm disable → reboot"
 }

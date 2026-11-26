@@ -62,9 +62,9 @@
     "network": {
         "interval": 3,
         "format-wifi": "● {essid}",
-        "format-ethernet": "● {bandwidthDownBytes}",
+        "format-ethernet": "● Интернет ({bandwidthDownBytes})",
         "format-disconnected": "○ offline",
-        "tooltip-format": "{ifname}  {ipaddr}\n↓ {bandwidthDownBytes}  ↑ {bandwidthUpBytes}",
+        "tooltip-format": "Интернет {ipaddr}\n↓ {bandwidthDownBytes} ↑ {bandwidthUpBytes}",
         "on-click": "nm-connection-editor"
     },
 
