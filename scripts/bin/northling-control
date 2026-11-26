@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
-# Центр управления Northling (Super+A). Повторный вызов закрывает.
+# Центр управления Northling (Super+A). Повторный вызов перезапускает окно. Esc / клик мимо — закрыть.
+# Любая причина, по которой окно не открылось, пишется в $XDG_RUNTIME_DIR/northling-control.log
+LOG="${XDG_RUNTIME_DIR:-/tmp}/northling-control.log"
 D="$HOME/.local/share/northling/widgets"
-pkill -f northling_control.py 2>/dev/null; sleep 0.15  # старый экземпляр (даже зависший) убираем — иначе окно не открывалось
-[ -f "$D/northling_control.py" ] || { echo "не установлено (northling update)"; exit 1; }
-python3 -c "import gi; gi.require_version('GtkLayerShell','0.1')" 2>/dev/null || { echo "нет gtk-layer-shell: northling update --full (из TTY)"; exit 1; }
+fail() { echo "$(date '+%F %T') ОШИБКА: $*" >>"$LOG"; command -v notify-send >/dev/null && notify-send "Центр управления" "$*"; exit 1; }
+echo "$(date '+%F %T') запуск" >"$LOG"
+[ -f "$D/northling_control.py" ] || fail "нет файла $D/northling_control.py — запусти: northling update (из TTY для полного)"
+python3 -c "import gi; gi.require_version('GtkLayerShell','0.1')" 2>/dev/null || fail "нет gtk-layer-shell — northling update --full (из TTY)"
+pkill -f northling_control.py 2>/dev/null; sleep 0.15
 pre=""; for l in /usr/lib/libgtk-layer-shell.so /usr/lib64/libgtk-layer-shell.so /usr/lib/x86_64-linux-gnu/libgtk-layer-shell.so; do [ -e "$l" ] && { pre="$l"; break; }; done
-LD_PRELOAD="$pre${LD_PRELOAD:+:$LD_PRELOAD}" setsid -f python3 "$D/northling_control.py" >"${XDG_RUNTIME_DIR:-/tmp}/northling-control.log" 2>&1 </dev/null
+LD_PRELOAD="$pre${LD_PRELOAD:+:$LD_PRELOAD}" setsid -f python3 "$D/northling_control.py" >>"$LOG" 2>&1 </dev/null

@@ -428,6 +428,7 @@ class Start(Gtk.Window):
         sw.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         self.list = Gtk.ListBox()
         self.list.set_selection_mode(Gtk.SelectionMode.SINGLE)
+        self.list.set_activate_on_single_click(True)  # одного клика ЛКМ достаточно, Enter тоже работает
         self.list.connect("row-activated", lambda lb_, row: self.run_row(row))
         add_classes(self.list, "results")
         sw.add(self.list)
@@ -577,6 +578,7 @@ class Start(Gtk.Window):
         sw = Gtk.ScrolledWindow()
         sw.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         self.store_list = Gtk.ListBox()
+        self.store_list.set_activate_on_single_click(True)
         self.store_list.set_selection_mode(Gtk.SelectionMode.NONE)
         add_classes(self.store_list, "results")
         sw.add(self.store_list)
@@ -645,6 +647,7 @@ class Start(Gtk.Window):
         sw = Gtk.ScrolledWindow()
         sw.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         self.clip_list = Gtk.ListBox()
+        self.clip_list.set_activate_on_single_click(True)
         self.clip_list.set_selection_mode(Gtk.SelectionMode.NONE)
         add_classes(self.clip_list, "results")
         sw.add(self.clip_list)
