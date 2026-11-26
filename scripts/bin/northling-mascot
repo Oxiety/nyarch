@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Норт — маскот системы: northling mascot [list|set ИМЯ|next|random]
+# Стикер видно на рабочем столе (виджет), на экране блокировки и в «Пуске».
+D="$HOME/.local/share/northling/north"
+L="${XDG_CONFIG_HOME:-$HOME/.config}/northling/mascot.png"
+names=(thumbs hearts grumpy owo shock hug yap think smug)
+setm() { [ -f "$D/$1.png" ] || { echo "нет такого стикера: $1 (список: northling mascot list)"; exit 1; }
+  mkdir -p "$(dirname "$L")"; ln -sfn "$D/$1.png" "$L"; echo "Норт: $1"
+  "$HOME/.local/bin/northling-widgets" restart >/dev/null 2>&1; }
+cur() { basename "$(readlink -f "$L" 2>/dev/null)" .png; }
+case "${1:-list}" in
+  list) c="$(cur)"; for n in "${names[@]}"; do [ -f "$D/$n.png" ] && printf '%s %s\n' "$([ "$n" = "$c" ] && echo '●' || echo ' ')" "$n"; done ;;
+  set)  [ -n "${2:-}" ] || { echo "использование: northling mascot set ИМЯ"; exit 2; }; setm "$2" ;;
+  next) c="$(cur)"; i=0; for k in "${!names[@]}"; do [ "${names[$k]}" = "$c" ] && i=$((k+1)); done; setm "${names[$((i % ${#names[@]}))]}" ;;
+  random) setm "${names[RANDOM % ${#names[@]}]}" ;;
+  *) echo "использование: northling mascot list|set ИМЯ|next|random"; exit 2 ;;
+esac

@@ -4,5 +4,6 @@
   "system":   { "enabled": true },
   "weather":  { "enabled": true, "city": "", "latitude": null, "longitude": null, "units": "metric" },
   "player":   { "enabled": true },
+  "mascot":   { "enabled": true, "size": 210 },
   "layout":   { "top": 64, "side": 24, "width": 340 }
 }

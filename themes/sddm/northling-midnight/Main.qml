@@ -22,6 +22,16 @@ Rectangle {
         source: "background.png"
         fillMode: Image.PreserveAspectCrop
     }
+    // Норт — маскот системы
+    Image {
+        source: "north.png"
+        height: parent.height * 0.42
+        fillMode: Image.PreserveAspectFit
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.margins: 36
+        smooth: true
+    }
     // затемнение, чтобы форма читалась на любых обоях
     Rectangle {
         anchors.fill: parent

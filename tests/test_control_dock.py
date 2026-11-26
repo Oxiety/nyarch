@@ -39,3 +39,16 @@ nl_data.GLASS_FLAG = "/tmp/nl-glass-flag-test"
 open(nl_data.GLASS_FLAG, "w").close(); assert nl_data.glass_on(); os.remove(nl_data.GLASS_FLAG); assert not nl_data.glass_on()
 assert os.path.getsize(os.path.join(ROOT, "glass.css")) > 500
 print("Glass OK")
+
+# ── Норт ──
+import tempfile
+nd_ = tempfile.mkdtemp(); 
+for n in nl_data.MASCOT_NAMES[:3]:
+    open(os.path.join(nd_, n + ".png"), "wb").write(b"x")
+nl_data.NORTH_DIR = nd_; nl_data.MASCOT_LINK = os.path.join(nd_, "cfg", "mascot.png")
+assert [n for n, _ in nl_data.mascot_files()] == ["thumbs", "hearts", "grumpy"]
+assert nl_data.mascot_set("hearts") and nl_data.mascot_current()[0] == "hearts"
+nl_data.mascot_next(); assert nl_data.mascot_current()[0] == "grumpy"
+nl_data.mascot_next(); assert nl_data.mascot_current()[0] == "thumbs"
+assert nl_data.mascot_set("нет") is None
+print("Mascot OK")

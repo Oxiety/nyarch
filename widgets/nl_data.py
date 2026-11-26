@@ -10,8 +10,57 @@ DEFAULT_CONFIG = {
     "system":   {"enabled": True},
     "weather":  {"enabled": True, "city": "", "latitude": None, "longitude": None, "units": "metric"},
     "player":   {"enabled": True},
+    "mascot":   {"enabled": True, "size": 210},
     "layout":   {"top": 64, "side": 24, "width": 340},
 }
+
+
+NORTH_DIR = os.environ.get("NL_NORTH_DIR", os.path.expanduser("~/.local/share/northling/north"))
+MASCOT_LINK = os.path.join(os.environ.get("XDG_CONFIG_HOME", os.path.expanduser("~/.config")), "northling", "mascot.png")
+MASCOT_NAMES = ["thumbs", "hearts", "grumpy", "owo", "shock", "hug", "yap", "think", "smug"]
+
+
+def mascot_files():
+    """Стикеры Норта (маскот системы): [(имя, путь)] — только те, что реально лежат на диске."""
+    return [(n, os.path.join(NORTH_DIR, n + ".png")) for n in MASCOT_NAMES if os.path.exists(os.path.join(NORTH_DIR, n + ".png"))]
+
+
+def mascot_current():
+    try:
+        cur = os.path.realpath(MASCOT_LINK)
+    except OSError:
+        cur = ""
+    files = mascot_files()
+    for n, f in files:
+        if os.path.realpath(f) == cur:
+            return n, f
+    return files[0] if files else (None, None)
+
+
+def mascot_set(name):
+    """Сделать стикер активным (симлинк, его читают виджет и экран блокировки). → путь или None."""
+    for n, f in mascot_files():
+        if n == name:
+            os.makedirs(os.path.dirname(MASCOT_LINK), exist_ok=True)
+            tmp = MASCOT_LINK + ".tmp"
+            try:
+                os.remove(tmp)
+            except OSError:
+                pass
+            os.symlink(f, tmp)
+            os.replace(tmp, MASCOT_LINK)
+            return f
+    return None
+
+
+def mascot_next():
+    files = mascot_files()
+    if not files:
+        return None
+    cur, _ = mascot_current()
+    names = [n for n, _ in files]
+    nxt = names[(names.index(cur) + 1) % len(names)] if cur in names else names[0]
+    return mascot_set(nxt)
 
 
 GLASS_FLAG = os.path.join(os.environ.get("XDG_CONFIG_HOME", os.path.expanduser("~/.config")), "northling", "glass")

@@ -11,7 +11,7 @@ class Dummy(mock.MagicMock):
 
 gi = types.ModuleType("gi"); gi.require_version = lambda *a, **k: None
 repo = types.ModuleType("gi.repository")
-for n in ("Gtk", "Gdk", "GLib", "GtkLayerShell"):
+for n in ("Gtk", "Gdk", "GLib", "GdkPixbuf", "GtkLayerShell"):
     setattr(repo, n, Dummy(name=n))
 repo.Gtk.Window = type("Window", (), {"__init__": lambda s, **k: None, "__getattr__": lambda s, n: Dummy()})
 repo.GLib.timeout_add_seconds = lambda *a, **k: 1

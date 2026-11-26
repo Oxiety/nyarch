@@ -11,7 +11,7 @@ import gi
 gi.require_version("Gtk", "3.0")
 gi.require_version("Gdk", "3.0")
 gi.require_version("GtkLayerShell", "0.1")
-from gi.repository import Gtk, Gdk, GLib, GtkLayerShell  # noqa: E402
+from gi.repository import Gtk, Gdk, GLib, GdkPixbuf, GtkLayerShell  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DAYS = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"]
@@ -122,6 +122,8 @@ class App:
             self.build_system()
         if self.cfg["player"]["enabled"]:
             self.build_player()
+        if self.cfg.get("mascot", {}).get("enabled", True):
+            self.build_mascot()
         for w in (self.left, self.right):
             w.show_all()
         if hasattr(self, "player_card"):
@@ -196,6 +198,37 @@ class App:
         cr.set_source_rgba(*pink, 1.0)
         cr.fill()
         return False
+
+    # ── маскот: Норт (клик — следующий стикер) ──────────────
+    def build_mascot(self):
+        files = data.mascot_files()
+        if not files:
+            return
+        self.m_size = int(self.cfg.get("mascot", {}).get("size", 210))
+        self.m_img = Gtk.Image()
+        ev = Gtk.EventBox()
+        ev.set_visible_window(False)
+        ev.add(self.m_img)
+        ev.set_tooltip_text("Норт. Клик — другой стикер")
+        ev.connect("button-press-event", self.on_mascot_click)
+        self.m_img.set_halign(Gtk.Align.CENTER)
+        self.show_mascot(data.mascot_current()[1])
+        self.left.add_card(ev)
+
+    def show_mascot(self, path):
+        if not path:
+            return
+        try:
+            pb = GdkPixbuf.Pixbuf.new_from_file(path)
+            w, h = pb.get_width(), pb.get_height()
+            k = self.m_size / max(w, h)
+            self.m_img.set_from_pixbuf(pb.scale_simple(max(1, int(w * k)), max(1, int(h * k)), GdkPixbuf.InterpType.BILINEAR))
+        except Exception as e:
+            print("mascot:", e, file=sys.stderr)
+
+    def on_mascot_click(self, *_):
+        self.show_mascot(data.mascot_next())
+        return True
 
     # ── календарь ─────────────────────────────────────────
     def build_calendar(self):

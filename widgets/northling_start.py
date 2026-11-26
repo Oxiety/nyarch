@@ -2,7 +2,7 @@
 """Northling Start — «Пуск»: поиск, приложения, гайд по биндам, настройки, питание.
 Открывается по Super+R или кликом по «n.» в панели. Esc — закрыть.
 Умная строка: «2+2*3» — калькулятор, «> htop» — команда в терминале, «? запрос» — поиск в интернете."""
-import ast, getpass, datetime, json, math, operator, os, re, shlex, subprocess, sys, threading
+import ast, getpass, random, datetime, json, math, operator, os, re, shlex, subprocess, sys, threading
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import nl_data as data
@@ -372,6 +372,13 @@ class Start(Gtk.Window):
         self.entry.connect("activate", lambda e: self.activate_selected())
         right.pack_start(self.entry, False, False, 0)
         box.pack_start(right, True, True, 0)
+        files = data.mascot_files()
+        if files:  # Норт выглядывает справа, каждый раз в новом настроении
+            try:
+                pb = GdkPixbuf.Pixbuf.new_from_file_at_scale(random.choice(files)[1], 150, 96, True)
+                box.pack_end(Gtk.Image.new_from_pixbuf(pb), False, False, 0)
+            except Exception as e:
+                print("mascot:", e, file=sys.stderr)
         return box
 
     def build_tabs(self):
