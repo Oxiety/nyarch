@@ -32,7 +32,7 @@ nl_verify() {
   for c in hypr/hyprland.lua hypr/hyprlock.conf hypr/hypridle.conf waybar/config.jsonc waybar/style.css \
            rofi/config.rasi rofi/northling.rasi kitty/kitty.conf swaync/config.json swaync/style.css; do v_file "$XDG_CONFIG/$c"; done
   if [ "${WITH_WIDGETS:-1}" = 1 ]; then
-    v_file "$HOME/.local/share/northling/widgets/northling_widgets.py"; v_file "$XDG_CONFIG/northling/widgets.json"; v_json "$XDG_CONFIG/northling/widgets.json"
+    v_file "$HOME/.local/share/northling/widgets/northling_widgets.py"; v_file "$HOME/.local/share/northling/widgets/northling_start.py"; v_file "$XDG_CONFIG/northling/widgets.json"; v_json "$XDG_CONFIG/northling/widgets.json"
     python3 -c "import gi; gi.require_version('GtkLayerShell','0.1')" >/dev/null 2>&1 && vok "виджеты: python-gobject и gtk-layer-shell на месте" \
       || vwarn "виджетам не хватает python-gobject / gtk-layer-shell → northling update --full (из TTY)"
   fi

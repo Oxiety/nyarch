@@ -1,6 +1,6 @@
 /* Northling Midnight — виджеты рабочего стола */
 window { background: transparent; }
-* { font-family: "JetBrainsMono Nerd Font", "Noto Sans", sans-serif; color: #E5E7F5; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45); }
+* { font-family: "Inter", "Noto Sans", sans-serif; color: #E5E7F5; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45); }
 
 .card {
     background: rgba(14, 10, 36, 0.84);
@@ -46,3 +46,6 @@ calendar { background: transparent; border: none; color: #E5E7F5; padding: 0; }
 calendar.header { color: #A78BFA; font-weight: 700; }
 calendar:selected { background: linear-gradient(135deg, #A78BFA, #82BFFF); color: #0E0A24; border-radius: 999px; }
 calendar:indeterminate { color: #55507A; }
+
+.metric-val, .w-extra, .clock-date { font-family: "JetBrainsMono Nerd Font", monospace; }
+.w-icon { font-family: "JetBrainsMono Nerd Font", "Noto Color Emoji", sans-serif; }

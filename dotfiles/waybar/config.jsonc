@@ -15,8 +15,8 @@
     "custom/logo": {
         "format": "n.",
         "tooltip": false,
-        "on-click": "rofi -show drun",
-        "on-click-right": "~/.local/bin/northling-wallpaper --menu"
+        "on-click": "~/.local/bin/northling-start",
+        "on-click-right": "~/.local/bin/northling-start settings"
     },
 
     "hyprland/workspaces": {

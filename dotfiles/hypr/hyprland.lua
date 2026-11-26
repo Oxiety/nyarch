@@ -13,7 +13,7 @@ local HOME = os.getenv("HOME")
 -- ── A. Программы ─────────────────────────────────────────────────────────────
 local terminal    = "kitty"
 local fileManager = "dolphin"
-local menu        = "rofi -show drun"
+local menu        = "~/.local/bin/northling-start"
 local lock        = "pidof hyprlock || hyprlock"
 local shot        = HOME .. "/.local/bin/northling-screenshot"
 local mainMod     = "SUPER"
@@ -122,7 +122,8 @@ hl.animation({ leaf = "workspaces",   enabled = true, speed = 5.0, bezier = "sil
 -- ── F. Горячие клавиши ───────────────────────────────────────────────────────
 hl.bind(mainMod .. " + Q", hl.dsp.exec_cmd(terminal))                  -- терминал
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))               -- файлы
-hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu))                      -- лаунчер
+hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu))                      -- «Пуск» Northling
+hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("rofi -show drun"))   -- запасной лаунчер (rofi)
 hl.bind(mainMod .. " + C", hl.dsp.window.close())                      -- закрыть окно
 hl.bind(mainMod .. " + L", hl.dsp.exec_cmd(lock))                      -- блокировка
 hl.bind(mainMod .. " + V", hl.dsp.exec_cmd("cliphist list | rofi -dmenu -p буфер | cliphist decode | wl-copy"))
