@@ -10,7 +10,7 @@
 
     "modules-left":   ["custom/logo", "hyprland/workspaces", "custom/player"],
     "modules-center": ["custom/clock"],
-    "modules-right":  ["group/sys", "group/io", "tray", "custom/notification", "custom/power"],
+    "modules-right":  ["group/sys", "group/io", "tray", "custom/control", "custom/notification", "custom/power"],
 
     "custom/logo": {
         "format": "n.",
@@ -72,8 +72,9 @@
         "format": "♪ {volume}",
         "format-muted": "♪ ✕",
         "scroll-step": 2,
-        "on-click": "pavucontrol",
+        "on-click": "~/.local/bin/northling-control",
         "on-click-right": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
+        "on-click-middle": "pavucontrol",
         "tooltip": false
     },
 
@@ -105,6 +106,12 @@
         "on-click": "swaync-client -t -sw",
         "on-click-right": "swaync-client -d -sw",
         "escape": true
+    },
+
+    "custom/control": {
+        "format": "󰒓",
+        "tooltip-format": "Центр управления (Super+A)",
+        "on-click": "~/.local/bin/northling-control"
     },
 
     "custom/power": {

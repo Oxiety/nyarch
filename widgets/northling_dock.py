@@ -111,7 +111,7 @@ class Dock(Gtk.Window):
         self.ev = Gtk.EventBox()
         self.ev.add_events(Gdk.EventMask.ENTER_NOTIFY_MASK | Gdk.EventMask.LEAVE_NOTIFY_MASK)
         self.ev.connect("enter-notify-event", lambda *_: self.reveal(True))
-        self.ev.connect("leave-notify-event", lambda *_: self.reveal(False))
+        self.ev.connect("leave-notify-event", self.on_leave)
         self.add(self.ev)
         outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.ev.add(outer)
@@ -133,6 +133,16 @@ class Dock(Gtk.Window):
         self.show_all()
         if not self.cfg["autohide"]:
             self.rev.set_reveal_child(True)
+
+    def on_leave(self, w, ev):
+        # ушли «внутрь» иконки — это не уход из дока; раньше из-за этого док уезжал под курсором
+        if ev.detail == Gdk.NotifyType.INFERIOR:
+            return False
+        a = self.get_allocation()
+        if 0 <= ev.x < a.width and 0 <= ev.y < a.height:
+            return False
+        self.reveal(False)
+        return False
 
     def reveal(self, on):
         if not self.cfg["autohide"]:

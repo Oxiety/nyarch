@@ -16,7 +16,7 @@ window#waybar { background: transparent; color: #E5E7F5; }
 
 /* ── общий вид островов ── */
 #custom-logo, #workspaces, #custom-player, #custom-clock, #sys, #io, #tray,
-#custom-notification, #custom-power {
+#custom-control, #custom-notification, #custom-power {
     background: rgba(14, 10, 36, 0.80);
     border: 1px solid rgba(167, 139, 250, 0.22);
     border-radius: 999px;
@@ -62,7 +62,9 @@ window#waybar { background: transparent; color: #E5E7F5; }
 /* ── часы по центру ── */
 #custom-clock {
     padding: 0 22px;
-    font-size: 14px;
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
     border-color: rgba(167, 139, 250, 0.38);
 }
 #custom-clock:hover { border-color: #A78BFA; }
@@ -72,12 +74,13 @@ window#waybar { background: transparent; color: #E5E7F5; }
 #custom-cpu, #custom-mem, #custom-gpu, #network, #pulseaudio, #custom-lang {
     background: transparent; border: none; padding: 0 9px; margin: 0;
 }
+#custom-cpu, #custom-mem, #custom-gpu { font-weight: 600; font-size: 12px; }
 #custom-cpu { color: #A78BFA; }
 #custom-mem { color: #82BFFF; }
 #custom-gpu { color: #D284E5; }
 #custom-cpu.warn, #custom-mem.warn, #custom-gpu.warn { color: #F2D479; }
 #custom-cpu.crit, #custom-mem.crit, #custom-gpu.crit { color: #F27A9C; }
-#network       { color: #7FE0B0; }
+#network       { color: #7FE0B0; font-weight: 700; }
 #network.disconnected { color: #F27A9C; }
 #pulseaudio    { color: #C4B8F5; }
 #pulseaudio.muted { color: #9E94CD; }
@@ -90,7 +93,8 @@ window#waybar { background: transparent; color: #E5E7F5; }
 #tray > .needs-attention { -gtk-icon-effect: highlight; }
 
 /* ── уведомления и питание: круглые кнопки ── */
-#custom-notification, #custom-power { padding: 0; min-width: 36px; color: #C4B8F5; }
+#custom-control, #custom-notification, #custom-power { padding: 0; min-width: 36px; color: #C4B8F5; font-size: 16px; }
+#custom-control:hover { color: #E3D7FF; border-color: #E3D7FF; }
 #custom-notification:hover { color: #82BFFF; border-color: #82BFFF; }
 #custom-power { color: #F27A9C; }
 #custom-power:hover { background: rgba(242, 122, 156, 0.18); border-color: #F27A9C; }
