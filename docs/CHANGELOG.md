@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.1.0-beta.15
+- Официальный `dotfiles/zsh/zshrc` заменён присланным владельцем (приветствие «n. workspace session», алиасы, история, личный `~/.p10k.northling.zsh` в приоритете). `p10k.zsh` в репо — тот же, что и был; «n.»-промпт живёт в личном `~/.p10k.northling.zsh` на машине.
+
 ## 0.1.0-beta.14
 - Уведомления: причиной была mako, а не dunst (она занимала `org.freedesktop.Notifications`). Теперь при старте гасятся mako и dunst, а в `~/.local/share/dbus-1/services` ставится D-Bus-файл, который отдаёт имя swaync (mako больше не запустится по D-Bus). `northling doctor` предупреждает про mako.
 
