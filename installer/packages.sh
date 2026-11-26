@@ -30,6 +30,8 @@ pkg_lists() {
   [ "${WITH_DOCKER:-0}" = 1 ] && echo "$NL_ROOT/packages/optional.txt"
   [ "${WITH_WIDGETS:-1}" = 1 ] && echo "$NL_ROOT/packages/widgets.txt"
   [ "${WITH_SDDM:-1}"    = 1 ] && echo "$NL_ROOT/packages/sddm.txt"
+  [ "${WITH_EXTRAS:-1}"  = 1 ] && echo "$NL_ROOT/packages/extras.txt"
+  [ "${WITH_GAMING:-0}"  = 1 ] && echo "$NL_ROOT/packages/gaming.txt"
   return 0
 }
 

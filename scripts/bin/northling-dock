@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Док: northling dock start|stop|restart. Настройки: ~/.config/northling/dock.json (pinned, autohide, icon_size, enabled)
+D="$HOME/.local/share/northling/widgets"
+start() {
+  pgrep -f northling_dock.py >/dev/null && { echo "док уже запущен"; return 0; }
+  [ -f "$D/northling_dock.py" ] || { echo "док не установлен (northling update)"; return 1; }
+  python3 -c "import gi; gi.require_version('GtkLayerShell','0.1')" 2>/dev/null || { echo "нет gtk-layer-shell: northling update --full"; return 1; }
+  pre=""; for l in /usr/lib/libgtk-layer-shell.so /usr/lib64/libgtk-layer-shell.so /usr/lib/x86_64-linux-gnu/libgtk-layer-shell.so; do [ -e "$l" ] && { pre="$l"; break; }; done
+  LD_PRELOAD="$pre${LD_PRELOAD:+:$LD_PRELOAD}" setsid -f python3 "$D/northling_dock.py" >"${XDG_RUNTIME_DIR:-/tmp}/northling-dock.log" 2>&1 </dev/null
+}
+case "${1:-start}" in
+  start) start ;;
+  stop) pkill -f northling_dock.py ;;
+  restart) pkill -f northling_dock.py; sleep 0.3; start ;;
+  *) echo "использование: northling dock start|stop|restart"; exit 2 ;;
+esac

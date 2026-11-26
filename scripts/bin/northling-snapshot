@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Снимки системы (Timeshift): northling snapshot [create|list|setup|restore]
+#   create   сделать снимок прямо сейчас (northling update --full делает его сам, если Timeshift настроен)
+#   list     показать снимки
+#   setup    первая настройка (окно Timeshift: выбрать диск для снимков)
+#   restore  откат — через окно Timeshift (там видно, что именно вернётся)
+cmd="${1:-help}"; [ $# -gt 0 ] && shift
+conf=/etc/timeshift/timeshift.json
+have() { command -v "$1" >/dev/null 2>&1; }
+have timeshift || { echo "Timeshift не установлен:  sudo pacman -S timeshift   (или northling update --full)"; exit 1; }
+configured() { [ -f "$conf" ] && grep -Eq '"backup_device_uuid" *: *"[^"]+"' "$conf"; }
+case "$cmd" in
+  create)
+    configured || { echo "Timeshift ещё не настроен. Запусти:  northling snapshot setup"; exit 1; }
+    sudo timeshift --create --comments "${*:-northling}" --tags D ;;
+  list)   sudo timeshift --list ;;
+  setup|restore)
+    if have timeshift-launcher; then exec timeshift-launcher; else exec timeshift-gtk; fi ;;
+  *) sed -n '2,6p' "$0" | sed 's/^# \{0,1\}//' ;;
+esac

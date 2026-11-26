@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# «Пуск» Northling: northling-start [apps|binds|settings|power]. Повторный вызов закрывает меню.
+# «Пуск» Northling: northling-start [apps|store|clip|binds|settings|power]. Повторный вызов закрывает меню.
 D="$HOME/.local/share/northling/widgets"
 if pgrep -f "northling_start.py" >/dev/null; then pkill -f northling_start.py; exit 0; fi
 [ -f "$D/northling_start.py" ] || { echo "«Пуск» не установлен (northling update)"; exit 1; }

@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Игровой режим: northling gamemode [on|off|toggle|status]
+# on  — без анимаций, теней и размытия, без отступов, профиль питания «производительность»
+# off — вернуть всё как было (перечитать конфиг Hyprland)
+st="${XDG_RUNTIME_DIR:-/tmp}/northling-gamemode"
+note() { command -v notify-send >/dev/null && notify-send -a Northling "Игровой режим" "$1"; echo "$1"; }
+on() {
+  out="$(hyprctl --batch "keyword animations:enabled 0 ; keyword decoration:shadow:enabled 0 ; keyword decoration:blur:enabled 0 ; keyword general:gaps_in 0 ; keyword general:gaps_out 0 ; keyword decoration:rounding 0" 2>&1)"
+  command -v powerprofilesctl >/dev/null && powerprofilesctl set performance 2>/dev/null
+  touch "$st"
+  case "$out" in *rror*|*nknown*) note "Включён частично (часть настроек Hyprland не приняла): $out" ;; *) note "Включён: анимации выключены, профиль питания — производительность" ;; esac
+}
+off() {
+  hyprctl reload >/dev/null 2>&1
+  command -v powerprofilesctl >/dev/null && powerprofilesctl set balanced 2>/dev/null
+  rm -f "$st"; note "Выключен: всё вернулось"
+}
+case "${1:-toggle}" in
+  on) on ;; off) off ;;
+  toggle) [ -e "$st" ] && off || on ;;
+  status) [ -e "$st" ] && echo on || echo off ;;
+  *) echo "использование: northling gamemode on|off|toggle|status"; exit 2 ;;
+esac

@@ -2,6 +2,8 @@
 # northling-wallpaper — сменить обои, не трогая системные конфиги.
 #   northling-wallpaper              выбрать из списка (rofi)
 #   northling-wallpaper --random     случайные из ~/Pictures/Wallpapers
+#   northling-wallpaper --loop [МИН]  менять обои каждые МИН минут (по умолчанию 30), крутится в фоне
+#   northling-wallpaper --stop        остановить смену по таймеру
 #   northling-wallpaper /путь/к.png  конкретный файл
 # Твои обои: просто положи картинку в ~/Pictures/Wallpapers/ — она появится в списке.
 set -u
@@ -9,6 +11,17 @@ conf="${XDG_CONFIG_HOME:-$HOME/.config}/northling"
 link="$conf/wallpaper"
 dir="$HOME/Pictures/Wallpapers"
 arg="${1:---menu}"
+
+if [ "$arg" = "--loop" ]; then
+  mins="${2:-30}"; pidf="${XDG_RUNTIME_DIR:-/tmp}/northling-wallpaper-loop.pid"
+  [ -f "$pidf" ] && kill -0 "$(cat "$pidf")" 2>/dev/null && { echo "уже крутится"; exit 0; }
+  ( echo $BASHPID > "$pidf"; while sleep "$((mins*60))"; do "$0" --random >/dev/null 2>&1; done ) >/dev/null 2>&1 </dev/null &
+  disown; echo "Обои меняются каждые $mins мин. Остановить: northling-wallpaper --stop"; exit 0
+fi
+if [ "$arg" = "--stop" ]; then
+  pidf="${XDG_RUNTIME_DIR:-/tmp}/northling-wallpaper-loop.pid"
+  [ -f "$pidf" ] && kill "$(cat "$pidf")" 2>/dev/null; rm -f "$pidf"; echo "Смена по таймеру остановлена"; exit 0
+fi
 
 notify() { command -v notify-send >/dev/null 2>&1 && notify-send "Обои" "$1"; echo "$1" >&2; }
 list() { find "$dir" -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' \) 2>/dev/null | sort; }

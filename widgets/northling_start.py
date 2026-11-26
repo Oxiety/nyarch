@@ -2,7 +2,7 @@
 """Northling Start — «Пуск»: поиск, приложения, гайд по биндам, настройки, питание.
 Открывается по Super+R или кликом по «n.» в панели. Esc — закрыть.
 Умная строка: «2+2*3» — калькулятор, «> htop» — команда в терминале, «? запрос» — поиск в интернете."""
-import ast, getpass, datetime, json, math, operator, os, subprocess, sys
+import ast, getpass, datetime, json, math, operator, os, re, shlex, subprocess, sys, threading
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import nl_data as data
@@ -28,7 +28,10 @@ BINDS = [
         ("Super + E", "Файлы (Dolphin)"),
         ("Super + C", "Закрыть окно"),
         ("Super + L", "Заблокировать экран"),
-        ("Super + V", "История буфера обмена"),
+        ("Super + V", "Буфер обмена (история и закрепы)"),
+        ("Super + A", "Центр управления (звук, Wi-Fi, режимы)"),
+        ("Super + G", "Игровой режим вкл/выкл"),
+        ("Super + Shift + R", "Запасной лаунчер rofi"),
         ("Super + M", "Выйти из сессии"),
     ]),
     ("Окна", [
@@ -166,6 +169,69 @@ def spawn(cmd):
         return False
 
 
+PKG_RE = re.compile(r"^[A-Za-z0-9@._+-]+$")
+
+
+def parse_pacman_ss(text):
+    """Вывод `pacman -Ss` / `paru -Ssa` → [{repo,name,ver,installed,desc}]."""
+    out, cur = [], None
+    for line in (text or "").splitlines():
+        m = re.match(r"^(\S+)/(\S+)\s+(\S+)(.*)$", line)
+        if m and not line.startswith(" "):
+            cur = {"repo": m.group(1), "name": m.group(2), "ver": m.group(3),
+                   "installed": "nstalled" in m.group(4), "desc": ""}
+            out.append(cur)
+        elif cur is not None and line.startswith(" "):
+            cur["desc"] = (cur["desc"] + " " + line.strip()).strip()
+    return out
+
+
+def install_cmd(pkg, remove=False):
+    """Команда для терминала. Имя пакета проверяем строго — в оболочку попадает только безопасное."""
+    if not PKG_RE.match(pkg["name"]):
+        return None
+    n = shlex.quote(pkg["name"])
+    if remove:
+        body = f"sudo pacman -Rns {n}"
+    elif pkg["repo"] == "aur":
+        body = f"paru -S {n}"
+    else:
+        body = f"sudo pacman -S --needed {n}"
+    return [TERMINAL, "sh", "-c", body + "; echo; read -r -p 'Готово. Enter — закрыть… ' _"]
+
+
+def parse_cliphist(text):
+    """`cliphist list`: «id<TAB>текст» → [(id, текст, бинарное?)]."""
+    out = []
+    for line in (text or "").splitlines():
+        if "\t" not in line:
+            continue
+        i, t = line.split("\t", 1)
+        if i.isdigit():
+            binary = t.startswith("[[ binary")
+            out.append((i, "🖼  изображение" if binary else t.strip(), binary))
+    return out
+
+
+PINS_PATH = os.path.join(os.environ.get("XDG_CONFIG_HOME", os.path.expanduser("~/.config")), "northling", "pins.json")
+
+
+def load_pins(path=None):
+    try:
+        with open(path or PINS_PATH, encoding="utf-8") as f:
+            v = json.load(f)
+        return [x for x in v if isinstance(x, str)]
+    except (OSError, ValueError):
+        return []
+
+
+def save_pins(pins, path=None):
+    path = path or PINS_PATH
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(pins[:50], f, ensure_ascii=False, indent=2)
+
+
 def save_widgets_conf(updates, path=data.CONF_PATH):
     """Точечно меняем widgets.json: {"clock": {"style": "digital"}, ...}. Остальное не трогаем."""
     try:
@@ -205,7 +271,7 @@ def btn(text, css, cb):
 
 
 class Start(Gtk.Window):
-    TABS = [("apps", "Приложения"), ("binds", "Бинды"), ("settings", "Настройки"), ("power", "Система")]
+    TABS = [("apps", "Приложения"), ("store", "Установка"), ("clip", "Буфер"), ("binds", "Бинды"), ("settings", "Настройки"), ("power", "Система")]
 
     def __init__(self, tab="apps"):
         super().__init__(title="Northling Start")
@@ -245,11 +311,13 @@ class Start(Gtk.Window):
         self.stack.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
         self.stack.set_transition_duration(160)
         self.stack.add_named(self.build_apps(), "apps")
+        self.stack.add_named(self.build_store(), "store")
+        self.stack.add_named(self.build_clip(), "clip")
         self.stack.add_named(self.build_binds(), "binds")
         self.stack.add_named(self.build_settings(), "settings")
         self.stack.add_named(self.build_power(), "power")
         self.card.pack_start(self.stack, True, True, 0)
-        self.card.pack_start(lbl("Esc — закрыть   ·   Enter — открыть   ·   ↑↓ — выбор   ·   Ctrl+1…4 — вкладки   ·   2+2 · > команда · ? поиск в сети",
+        self.card.pack_start(lbl("Esc — закрыть   ·   Enter — открыть   ·   ↑↓ — выбор   ·   Ctrl+1…6 — вкладки   ·   2+2 · > команда · ? поиск в сети",
                                  "hint", 0.5, 120), False, False, 0)
 
         self.connect("key-press-event", self.on_key)
@@ -316,6 +384,12 @@ class Start(Gtk.Window):
         for k, b in self.tab_btns.items():
             ctx = b.get_style_context()
             (ctx.add_class if k == key else ctx.remove_class)("tab-on")
+        if key == "store":
+            self.store_entry.grab_focus()
+        elif key == "clip":
+            self.refresh_clip()
+        elif key == "apps":
+            self.entry.grab_focus()
         if key == "settings" and not self.wall_loaded:
             self.wall_loaded = True
             GLib.idle_add(self.load_wallpapers)
@@ -462,6 +536,144 @@ class Start(Gtk.Window):
                 print("launch:", e, file=sys.stderr)
         self.close_now()
 
+    # --- вкладка «Установка» (pacman + AUR) ---
+    def build_store(self):
+        page = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        self.store_entry = Gtk.SearchEntry()
+        self.store_entry.set_placeholder_text("Название программы — найду в репозиториях Arch и AUR, поставлю в один клик")
+        add_classes(self.store_entry, "start-search")
+        self.store_entry.connect("activate", lambda e: self.store_search(e.get_text()))
+        page.pack_start(self.store_entry, False, False, 0)
+        self.store_status = lbl("Введи название и нажми Enter. Установка идёт в терминале — там спросит пароль.", "hint")
+        page.pack_start(self.store_status, False, False, 0)
+        sw = Gtk.ScrolledWindow()
+        sw.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        self.store_list = Gtk.ListBox()
+        self.store_list.set_selection_mode(Gtk.SelectionMode.NONE)
+        add_classes(self.store_list, "results")
+        sw.add(self.store_list)
+        page.pack_start(sw, True, True, 0)
+        return page
+
+    def store_search(self, q):
+        q = q.strip()
+        if len(q) < 2:
+            return
+        self.store_status.set_text("Ищу…")
+
+        def work():
+            found = []
+            try:
+                r = subprocess.run(["pacman", "-Ss", q], capture_output=True, text=True, timeout=20)
+                found += parse_pacman_ss(r.stdout)
+            except (OSError, subprocess.SubprocessError):
+                pass
+            if subprocess.run(["sh", "-c", "command -v paru"], capture_output=True).returncode == 0:
+                try:
+                    r = subprocess.run(["paru", "-Ssa", q], capture_output=True, text=True, timeout=25)
+                    seen = {x["name"] for x in found}
+                    found += [x for x in parse_pacman_ss(r.stdout) if x["repo"] == "aur" and x["name"] not in seen]
+                except (OSError, subprocess.SubprocessError):
+                    pass
+            GLib.idle_add(self.store_show, found[:40], q)
+        threading.Thread(target=work, daemon=True).start()
+
+    def store_show(self, found, q):
+        for r in self.store_list.get_children():
+            self.store_list.remove(r)
+        for pkg in found:
+            row = Gtk.ListBoxRow()
+            h = Gtk.Box(spacing=12)
+            add_classes(h, "row")
+            v = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+            v.pack_start(lbl(f"{pkg['name']}   {pkg['ver']}", "row-title", 0.0, 60), False, False, 0)
+            v.pack_start(lbl(pkg["desc"] or "—", "row-sub", 0.0, 90), False, False, 0)
+            h.pack_start(v, True, True, 0)
+            h.pack_start(lbl(pkg["repo"], "keycap", 1.0, 10), False, False, 0)
+            rm = pkg["installed"]
+            h.pack_start(btn("Удалить" if rm else "Установить", "chip" if rm else "primary",
+                             lambda p=pkg, r=rm: self.store_do(p, r)), False, False, 0)
+            row.add(h)
+            self.store_list.add(row)
+        self.store_list.show_all()
+        self.store_status.set_text(f"Найдено: {len(found)}" if found else f"По запросу «{q}» ничего нет")
+        return False
+
+    def store_do(self, pkg, remove):
+        cmd = install_cmd(pkg, remove)
+        if cmd and spawn(cmd):
+            self.store_status.set_text(("Удаляю " if remove else "Ставлю ") + pkg["name"] + " — смотри терминал")
+        else:
+            self.store_status.set_text("Не смог запустить терминал или странное имя пакета")
+
+    # --- вкладка «Буфер» ---
+    def build_clip(self):
+        page = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        self.clip_entry = Gtk.SearchEntry()
+        self.clip_entry.set_placeholder_text("Фильтр по истории буфера обмена")
+        add_classes(self.clip_entry, "start-search")
+        self.clip_entry.connect("search-changed", lambda e: self.refresh_clip())
+        page.pack_start(self.clip_entry, False, False, 0)
+        sw = Gtk.ScrolledWindow()
+        sw.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        self.clip_list = Gtk.ListBox()
+        self.clip_list.set_selection_mode(Gtk.SelectionMode.NONE)
+        add_classes(self.clip_list, "results")
+        sw.add(self.clip_list)
+        page.pack_start(sw, True, True, 0)
+        return page
+
+    def refresh_clip(self):
+        for r in self.clip_list.get_children():
+            self.clip_list.remove(r)
+        q = self.clip_entry.get_text().strip().lower()
+        pins = load_pins()
+        entries = []
+        for t in pins:
+            if not q or q in t.lower():
+                entries.append(("pin", t, t, False))
+        try:
+            out = subprocess.run(["cliphist", "list"], capture_output=True, text=True, timeout=3).stdout
+        except (OSError, subprocess.SubprocessError):
+            out = ""
+        for i, t, binary in parse_cliphist(out)[:80]:
+            if not q or q in t.lower():
+                entries.append(("hist", i, t, binary))
+        if not entries:
+            entries.append(("none", "", "Пусто. Скопируй что-нибудь — оно появится здесь (нужен cliphist).", True))
+        for kind, key, text, binary in entries:
+            row = Gtk.ListBoxRow()
+            h = Gtk.Box(spacing=12)
+            add_classes(h, "row")
+            h.pack_start(lbl("󰐃" if kind == "pin" else "󰅍", "row-glyph", 0.5, 3), False, False, 0)
+            h.pack_start(lbl(text.replace("\n", " ")[:160], "row-title", 0.0, 80), True, True, 0)
+            if kind in ("pin", "hist"):
+                h.pack_start(btn("Копировать", "chip", lambda k=kind, kk=key: self.clip_copy(k, kk)), False, False, 0)
+                if kind == "pin":
+                    h.pack_start(btn("Открепить", "chip", lambda t=text: self.clip_unpin(t)), False, False, 0)
+                elif not binary:
+                    h.pack_start(btn("Закрепить", "chip", lambda t=text: self.clip_pin(t)), False, False, 0)
+            row.add(h)
+            self.clip_list.add(row)
+        self.clip_list.show_all()
+
+    def clip_copy(self, kind, key):
+        if kind == "pin":
+            p = subprocess.Popen(["wl-copy"], stdin=subprocess.PIPE, start_new_session=True)
+            p.stdin.write(key.encode()); p.stdin.close()
+        elif key.isdigit():
+            spawn(["sh", "-c", f"cliphist decode {key} | wl-copy"])
+        self.close_now()
+
+    def clip_pin(self, text):
+        pins = [t for t in load_pins() if t != text]
+        save_pins([text] + pins)
+        self.refresh_clip()
+
+    def clip_unpin(self, text):
+        save_pins([t for t in load_pins() if t != text])
+        self.refresh_clip()
+
     # --- вкладка «Бинды» ---
     def build_binds(self):
         sw = Gtk.ScrolledWindow()
@@ -606,7 +818,7 @@ class Start(Gtk.Window):
         if k == Gdk.KEY_Escape:
             self.close_now()
             return True
-        if ev.state & Gdk.ModifierType.CONTROL_MASK and Gdk.KEY_1 <= k <= Gdk.KEY_4:
+        if ev.state & Gdk.ModifierType.CONTROL_MASK and Gdk.KEY_1 <= k < Gdk.KEY_1 + len(self.TABS):
             self.show_tab(self.TABS[k - Gdk.KEY_1][0])
             return True
         if k in (Gdk.KEY_Down, Gdk.KEY_Up) and self.stack.get_visible_child_name() == "apps" and self.rows:

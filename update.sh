@@ -62,6 +62,13 @@ nl_snapshot
 
 # 3. Система
 say ""; say "${C_B}Обновление системы${C_RESET}"
+if [ "$MODE" = full ] && [ "$DRY_RUN" != 1 ] && have timeshift && [ -f /etc/timeshift/timeshift.json ] \
+   && grep -Eq '"backup_device_uuid" *: *"[^"]+"' /etc/timeshift/timeshift.json; then
+  info "Делаю снимок системы перед обновлением (Timeshift)…"
+  sudo timeshift --create --comments "перед northling update" --tags D >/dev/null 2>&1 && ok "Снимок системы создан (откат: northling snapshot restore)" || warn "Снимок не удался — продолжаю без него."
+elif [ "$MODE" = full ] && ! have timeshift; then
+  info "Совет: Timeshift даст откат системы после неудачного обновления (northling update --full поставит его)."
+fi
 if [ "$MODE" != full ]; then
   info "Пропущено (быстрый режим). Систему и пакеты обновляет:  northling update --full  — из TTY."
 elif have paru && ask "Обновить систему и AUR-пакеты (paru -Syu)?" y; then

@@ -1,0 +1,6 @@
+{
+  "enabled": true,
+  "autohide": true,
+  "icon_size": 44,
+  "pinned": ["firefox", "kitty", "dolphin", "code", "discord", "steam", "vlc"]
+}

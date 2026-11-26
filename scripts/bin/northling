@@ -2,6 +2,9 @@
 # northling — единая команда управления Northling Arch.
 #   northling update      обновить дизайн и конфиги (быстро; --full — ещё система, из TTY)
 #   northling widgets     виджеты рабочего стола: start|stop|restart|config
+#   northling snapshot    снимки системы (Timeshift)
+#   northling gamemode    игровой режим on|off
+#   northling control     центр управления (Super+A)
 #   northling start       «Пуск»: поиск, бинды, настройки (Super+R)
 #   northling sddm        тема экрана входа: test|enable|disable
 #   northling doctor      проверить, что всё работает
@@ -27,6 +30,10 @@ case "$cmd" in
   wallpaper|wall)    [ $# -eq 0 ] && set -- --menu; exec "$here/northling-wallpaper" "$@" ;;
   widgets)           exec "$here/northling-widgets" "$@" ;;
   start)             exec "$here/northling-start" "$@" ;;
+  snapshot|snap)     exec "$here/northling-snapshot" "$@" ;;
+  gamemode|game)     exec "$here/northling-gamemode" "$@" ;;
+  control|cc)        exec "$here/northling-control" "$@" ;;
+  dock)              exec "$here/northling-dock" "$@" ;;
   sddm)              exec bash "$repo/installer/sddm.sh" "$@" ;;
   diag)              exec bash "$here/northling-diag" "$@" ;;
   version|-v)        echo "Northling Arch $(cat "$repo/VERSION")" ;;

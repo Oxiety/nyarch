@@ -1,0 +1,7 @@
+# Northling Arch — packages/gaming.txt: игры на Linux (только если выбрано в установщике)
+# Steam лежит в репозитории multilib: если он выключен в /etc/pacman.conf, установщик сообщит «не найдено» и пойдёт дальше.
+steam
+mangohud
+gamemode
+lib32-mangohud
+lib32-gamemode

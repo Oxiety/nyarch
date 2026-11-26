@@ -22,6 +22,7 @@ widgets_install() {
   # конфиг — «твой»: кладём один раз, дальше не трогаем
   local fresh=0; [ -e "$WIDGETS_CONF" ] || fresh=1
   nl_put "$WIDGETS_SRC/widgets.json" "$WIDGETS_CONF" 644 seed
+  nl_put "$WIDGETS_SRC/dock.json" "$NL_CONF/dock.json" 644 seed
   if [ "$fresh" = 1 ] && [ "$DRY_RUN" != 1 ] && [ "$ASSUME_YES" != 1 ] && [ -t 0 ]; then
     local city
     read -r -p "${C_SKY}?${C_RESET} Город для виджета погоды (Enter — пропустить, потом: northling widgets config): " city || city=""

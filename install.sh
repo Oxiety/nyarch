@@ -76,6 +76,8 @@ if [ "$UPDATE_MODE" != 1 ]; then
   ask "Docker?" n && WITH_DOCKER=1 || WITH_DOCKER=0
   ask "Виджеты рабочего стола (часы, календарь, погода, плеер, нагрузка, сеть)?" y && WITH_WIDGETS=1 || WITH_WIDGETS=0
   ask "Тема экрана входа SDDM «Northling Midnight»? (включение спросим отдельно, с проверкой)" y && WITH_SDDM=1 || WITH_SDDM=0
+  ask "Центр управления, снимки системы (Timeshift), KDE Connect, ночной режим?" y && WITH_EXTRAS=1 || WITH_EXTRAS=0
+  ask "Игры: Steam, MangoHud, GameMode (нужен включённый multilib)?" n && WITH_GAMING=1 || WITH_GAMING=0
 fi
 pkg_classify
 pkg_report

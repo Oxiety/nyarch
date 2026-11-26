@@ -35,3 +35,16 @@ ns.WALL_DIR = d
 w = ns.Start("apps")
 w.refresh_results("2+2"); w.refresh_results("fire"); w.refresh_results("")
 print("Start smoke test OK")
+
+# ── «Установка», «Буфер» ──
+pk = ns.parse_pacman_ss("extra/firefox 130.0-1 [installed]\n    Fast, Private & Safe Web Browser\naur/foo-bin 1.2-1 (+5 0.10)\n    Some tool\n")
+assert len(pk) == 2 and pk[0]["installed"] and pk[0]["desc"].startswith("Fast") and pk[1]["repo"] == "aur" and not pk[1]["installed"]
+assert ns.install_cmd({"name": "firefox", "repo": "extra"})[-1].startswith("sudo pacman -S --needed firefox")
+assert "paru -S foo-bin" in ns.install_cmd({"name": "foo-bin", "repo": "aur"})[-1]
+assert "pacman -Rns" in ns.install_cmd({"name": "x", "repo": "extra"}, remove=True)[-1]
+assert ns.install_cmd({"name": "x; rm -rf ~", "repo": "extra"}) is None and ns.install_cmd({"name": "$(id)", "repo": "aur"}) is None
+cl = ns.parse_cliphist("12\tпривет мир\n11\t[[ binary data 1 KiB png 10x10 ]]\nмусор\n")
+assert cl == [("12", "привет мир", False), ("11", "🖼  изображение", True)]
+pp = os.path.join(d, "pins.json"); ns.save_pins(["a", "б"], pp); assert ns.load_pins(pp) == ["a", "б"]
+w.store_show(pk, "fire"); w.refresh_clip(); w.store_search("x")
+print("Start store/clip OK")

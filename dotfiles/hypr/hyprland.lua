@@ -126,7 +126,9 @@ hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu))                      -- «Пу
 hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("rofi -show drun"))   -- запасной лаунчер (rofi)
 hl.bind(mainMod .. " + C", hl.dsp.window.close())                      -- закрыть окно
 hl.bind(mainMod .. " + L", hl.dsp.exec_cmd(lock))                      -- блокировка
-hl.bind(mainMod .. " + V", hl.dsp.exec_cmd("cliphist list | rofi -dmenu -p буфер | cliphist decode | wl-copy"))
+hl.bind(mainMod .. " + V", hl.dsp.exec_cmd(HOME .. "/.local/bin/northling-start clip"))   -- буфер обмена
+hl.bind(mainMod .. " + A", hl.dsp.exec_cmd(HOME .. "/.local/bin/northling-control"))      -- центр управления
+hl.bind(mainMod .. " + G", hl.dsp.exec_cmd(HOME .. "/.local/bin/northling-gamemode toggle")) -- игровой режим
 hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'"))
 
 hl.bind(mainMod .. " + SPACE", hl.dsp.window.float({ action = "toggle" }))
@@ -206,6 +208,8 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("swaync")
     hl.exec_cmd("waybar")
     hl.exec_cmd(HOME .. "/.local/bin/northling-widgets start")
+    hl.exec_cmd(HOME .. "/.local/bin/northling-dock start")
+    hl.exec_cmd("sh -c 'command -v kdeconnect-indicator >/dev/null && kdeconnect-indicator'")
     hl.exec_cmd("hypridle")
     hl.exec_cmd("nm-applet --indicator")
     hl.exec_cmd("wl-paste --type text  --watch cliphist store")
