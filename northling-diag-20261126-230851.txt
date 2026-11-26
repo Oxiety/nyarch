@@ -1,0 +1,574 @@
+Northling Arch — диагностика v0.1.0
+Дата: 2026-11-26 23:08:51 +0200
+Файл: ~/northling-diag-20261126-230851.txt
+Режим: только чтение (sudo не используется)
+
+==== 1. Система ====
+$ grep -E '^(PRETTY_NAME|ID|BUILD_ID)=' /etc/os-release
+  PRETTY_NAME="Arch Linux"
+  ID=arch
+  BUILD_ID=rolling
+$ uname -srm
+  Linux 7.3.6-arch1-1 x86_64
+$ uptime -p
+  up 2 hours, 22 minutes
+  · Сессия: XDG_SESSION_TYPE=wayland  XDG_CURRENT_DESKTOP=Hyprland
+  · Shell по умолчанию: /usr/bin/zsh
+  · Пользователь в группах: northling docker wheel
+$ df -h / /home
+  Файловая система Размер Использовано  Дост Использовано% Cмонтировано в
+  /dev/nvme0n1p6     147G          63G   77G           45% /
+  /dev/nvme0n1p6     147G          63G   77G           45% /
+$ free -h
+                 total        used        free      shared  buff/cache   available
+  Mem:            15Gi       6,3Gi       2,1Gi       221Mi       6,9Gi       9,1Gi
+  Swap:          4,0Gi          0B       4,0Gi
+$ lscpu | grep -E 'Model name|^CPU\(s\)'
+  CPU(s):                                  16
+  CPU(s) scaling MHz:                      77%
+  · Пакетов установлено: 1131
+  · Явно установленных: 160
+  · AUR/внешних: 19
+  · Зеркала / время последнего sync баз: 2026-11-25 20:10:45
+
+==== 2. Загрузка и dual boot (Windows НЕ ТРОГАЕМ) ====
+  · Режим: UEFI
+$ lsblk -o NAME,SIZE,FSTYPE,LABEL,MOUNTPOINTS
+  NAME          SIZE FSTYPE LABEL            MOUNTPOINTS
+  zram0           4G swap   zram0            [SWAP]
+  nvme0n1     931,5G                         
+  ├─nvme0n1p1   100M vfat   SYSTEM           
+  ├─nvme0n1p2    16M                         
+  ├─nvme0n1p3 779,2G ntfs   Windows          
+  ├─nvme0n1p4   999M ntfs   Windows RE tools 
+  ├─nvme0n1p5   954M vfat                    /boot
+  └─nvme0n1p6 150,3G ext4                    /
+$ efibootmgr
+  BootCurrent: 0002
+  Timeout: 0 seconds
+  BootOrder: 0002,0000,0001
+  Boot0000* Windows Boot Manager	HD(1,GPT,6a8f2b85-4b02-46c2-978f-ccae488a002a,0x800,0x32000)/\EFI\Microsoft\Boot\bootmgfw.efi57494e444f5753000100000088000000780000004200430044004f0042004a004500430054003d007b00390064006500610038003600320063002d0035006300640064002d0034006500370030002d0061006300630031002d006600330032006200330034003400640034003700390035007d0000002c000100000010000000040000007fff0400
+  Boot0001* UEFI: PXE IPv4 Realtek PCIe 2.5GBE Family Controller	PciRoot(0x0)/Pci(0x1c,0x0)/Pci(0x0,0x0)/MAC(d843ae193ef6,0)/IPv4(0.0.0.0,0,DHCP,0.0.0.0,0.0.0.0,0.0.0.0)0000424f
+  Boot0002* UEFI OS	HD(5,GPT,c3e995b5-53af-47b6-ba80-0ea924913ec2,0x616af000,0x1dd000)/\EFI\BOOT\BOOTX64.EFI0000424f
+$ grep -E '^(GRUB_DISABLE_OS_PROBER|GRUB_CMDLINE_LINUX_DEFAULT|GRUB_TIMEOUT)' /etc/default/grub
+  GRUB_TIMEOUT=5
+  GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet nvidia_drm.modeset=1"
+  GRUB_TIMEOUT_STYLE=menu
+  GRUB_DISABLE_OS_PROBER=false
+  GRUB_DISABLE_OS_PROBER=false
+$ cat /proc/cmdline
+  root=PARTUUID=c9bd7f6a-8f14-4929-bb1a-365ea8c87e59 zswap.enabled=0 rw rootfstype=ext4
+$ timedatectl | grep -E 'Time zone|RTC in local'
+                  Time zone: Europe/Kaliningrad (EET, +0200)
+            RTC in local TZ: no
+  · Если «RTC in local TZ: no» — после Windows время на Linux может «прыгать». Лечится на стороне Linux, это обсудим отдельно.
+
+==== 3. Пакеты: что уже стоит / что есть в репозиториях (pacman -Q / -Si, без сети) ====
+-- Ядро и NVIDIA
+  [установлен]  linux                              7.3.6.arch1-1
+  [в репо       ] linux-headers                      
+  [установлен]  nvidia-open                        620.73.04-2
+  [в репо       ] nvidia-open-dkms                   
+  [НЕТ В РЕПО]  nvidia                             (искать в AUR?)
+  [НЕТ В РЕПО]  nvidia-dkms                        (искать в AUR?)
+  [установлен]  nvidia-utils                       620.73.04-1
+  [установлен]  egl-wayland                        4:1.1.24-1
+  [установлен]  libva-nvidia-driver                0.0.18-1
+  [установлен]  nvidia-settings                    620.73.04-1
+-- Hyprland и экосистема
+  [установлен]  hyprland                           0.57.2-2
+  [установлен]  hyprlock                           0.9.7-4
+  [установлен]  hypridle                           0.1.8-2
+  [установлен]  hyprpolkitagent                    0.2.0-4
+  [установлен]  xdg-desktop-portal-hyprland        1.5.0-2
+  [установлен]  xdg-desktop-portal-gtk             1.15.3-2
+  [установлен]  hyprutils                          0.14.4-1
+  [установлен]  hyprlang                           0.6.8-5
+-- Панель, уведомления, лаунчер
+  [установлен]  waybar                             0.16.0-3
+  [установлен]  swaync                             0.12.6-2
+  [установлен]  rofi                               2.1.1-1
+  [установлен]  rofi-wayland                       2.1.1-1
+  [установлен]  swaybg                             1.2.2-1
+  [установлен]  libnotify                          0.8.9-1
+-- Приложения
+  [установлен]  firefox                            161.0-1
+  [установлен]  dolphin                            26.08.3-1
+  [установлен]  kitty                              0.51.1-1
+  [установлен]  code                               1.148.0-1
+  [установлен]  visual-studio-code-bin             1.148.0-1
+  [установлен]  vlc                                3.0.24-4
+  [установлен]  mpv                                1:0.42.0-3
+  [установлен]  ark                                26.08.3-1
+-- Системное
+  [установлен]  pipewire                           1:1.6.11-2
+  [установлен]  pipewire-pulse                     1:1.6.11-2
+  [установлен]  pipewire-alsa                      1:1.6.11-2
+  [установлен]  wireplumber                        0.5.19-1
+  [установлен]  networkmanager                     1.58.1-3
+  [установлен]  network-manager-applet             1.36.0-2
+  [установлен]  playerctl                          2.4.1-5
+  [установлен]  cliphist                           1:0.7.0-2
+  [установлен]  wl-clipboard                       1:2.3.0-1
+  [установлен]  grim                               1.5.0-2
+  [установлен]  slurp                              1.5.0-2
+  [установлен]  jq                                 1.8.2-1
+-- Терминал и разработка
+  [установлен]  zsh                                5.9.2-1
+  [НЕТ В РЕПО]  oh-my-zsh-git                      (искать в AUR?)
+  [НЕТ В РЕПО]  zsh-theme-powerlevel10k            (искать в AUR?)
+  [НЕТ В РЕПО]  zsh-theme-powerlevel10k-git        (искать в AUR?)
+  [установлен]  fastfetch                          2.71.0-1
+  [установлен]  fzf                                0.75.0-1
+  [установлен]  zoxide                             0.10.0-1
+  [установлен]  eza                                0.23.5-2
+  [установлен]  bat                                0.26.1-3
+  [установлен]  ripgrep                            16.0.0-1
+  [установлен]  btop                               1.4.8-1
+  [установлен]  git                                2.56.1-1
+  [установлен]  github-cli                         2.106.0-1
+  [установлен]  docker                             1:29.10.1-1
+  [установлен]  nodejs                             26.13.1-2
+  [установлен]  npm                                12.2.3-1
+-- Шрифты
+  [установлен]  ttf-jetbrains-mono-nerd            3.5.1-2
+  [в репо       ] ttf-meslo-nerd                     
+  [установлен]  noto-fonts                         1:2026.11.01-1
+  [установлен]  noto-fonts-emoji                   1:20260924-1
+-- Для Qt/GTK оформления
+  [в репо       ] qt6ct                              
+  [в репо       ] kvantum                            
+  [установлен]  nwg-look                           1.2.1-1
+  [установлен]  breeze-icons                       6.32.0-1
+  [установлен]  papirus-icon-theme                 20260801-1
+-- AUR-помощник и Bluetooth (Bluetooth НЕ нужен — только проверяем, что не стоит)
+  [установлен]  paru                               2.2.1-1
+  [установлен]  bluez                              5.88-1
+  [установлен]  bluez-utils                        5.88-1
+  [установлен]  blueman                            2.4.6-2
+  · paru: paru v2.2.1 - libalpm v16.0.1
+
+==== 4. Hyprland ====
+$ hyprland --version
+  Hyprland 0.57.2 built from branch v0.57.2 at commit 11cbc6c577b84ffb1edf4df3fc5b6128c3ae6947 clean (VERSION: bump to 0.57.2).
+  Date: Mon Nov 9 11:05:46 2026
+  Tag: v0.57.2, commits: 8015
+  
+  Libraries:
+  Hyprgraphics: built against 0.7.0, system has 0.7.0
+  Hyprutils: built against 0.14.4, system has 0.14.4
+  Hyprcursor: built against 0.1.14, system has 0.1.14
+  Hyprlang: built against 0.6.8, system has 0.6.8
+  Aquamarine: built against 0.16.0, system has 0.16.0
+  
+  Version ABI string: 11cbc6c577b84ffb1edf4df3fc5b6128c3ae6947_aq_0.16_hu_0.14_hg_0.7_hc_0.1_hlg_0.6
+  no flags were set
+  
+$ hyprctl version
+  Hyprland 0.57.2 built from branch v0.57.2 at commit 11cbc6c577b84ffb1edf4df3fc5b6128c3ae6947 clean (VERSION: bump to 0.57.2).
+  Date: Mon Nov 9 11:05:46 2026
+  Tag: v0.57.2, commits: 8015
+  
+  Libraries:
+  Hyprgraphics: built against 0.7.0, system has 0.7.0
+  Hyprutils: built against 0.14.4, system has 0.14.4
+  Hyprcursor: built against 0.1.14, system has 0.1.14
+  Hyprlang: built against 0.6.8, system has 0.6.8
+  Aquamarine: built against 0.16.0, system has 0.16.0
+  
+  Version ABI string: 11cbc6c577b84ffb1edf4df3fc5b6128c3ae6947_aq_0.16_hu_0.14_hg_0.7_hc_0.1_hlg_0.6
+  no flags were set
+  
+$ hyprctl monitors
+  Monitor HDMI-A-1 (ID 0):
+  	1920x1080@60.00000 at 0x0
+  	description: Microstep G274F CC2H573802349
+  	make: Microstep
+  	model: G274F
+  	physical size (mm): 600x330
+  	serial: CC2H573802349
+  	active workspace: 1 (1)
+  	special workspace:  ()
+  	reserved: 0 56 0 0
+  	scale: 1
+  	transform: 0
+  	focused: yes
+  	dpmsStatus: 1
+  	vrr: false
+  	solitary: 0
+  	solitaryBlockedBy: windowed mode,missing candidate
+  	activelyTearing: false
+  	tearingBlockedBy: next frame is not torn,user settings,missing candidate,hw cursor
+  	directScanoutTo: 0
+  	directScanoutBlockedBy: user settings,missing candidate
+  	disabled: false
+  	currentFormat: XRGB8888
+  	mirrorOf: none
+  	availableModes: 1920x1080@60.00Hz 1920x1080@180.00Hz 1920x1080@165.00Hz 1920x1080@144.04Hz 1920x1080@119.88Hz 1920x1080@85.00Hz 1920x1080@59.94Hz 1920x1080@50.00Hz 1680x1050@59.95Hz 1280x1024@75.03Hz 1280x1024@60.02Hz 1440x900@59.89Hz 1680x720@119.88Hz 1280x720@119.88Hz 1280x720@59.94Hz 1280x720@50.00Hz 1024x768@75.03Hz 1024x768@70.07Hz 1024x768@60.00Hz 800x600@75.00Hz 800x600@72.19Hz 800x600@60.32Hz 800x600@56.25Hz 720x576@50.00Hz 720x480@119.88Hz 720x480@59.94Hz 640x480@75.00Hz 640x480@72.81Hz 640x480@59.94Hz 640x480@59.93Hz 
+  	colorManagementPreset: srgb
+  	sdrBrightness: 1
+  	sdrSaturation: 1
+  	sdrMinLuminance: 0.2
+  	sdrMaxLuminance: 80
+$ hyprctl devices
+  mice:
+  	Mouse at 55e5e5863610:
+  		usb-optical-mouse
+  			default speed: 0.00000
+  			scroll factor: -1.00
+  	Mouse at 55e5e5fe8840:
+  		semico-usb-keyboard-consumer-control-1
+  			default speed: 0.00000
+  			scroll factor: -1.00
+  
+  
+  Keyboards:
+  	Keyboard at 55e5e585cb20:
+  		semico-usb-keyboard
+  			rules: r "", m "", l "us,ru", v "", o "grp:alt_shift_toggle"
+  			active layout index: 0
+  			active keymap: English (US)
+  			capsLock: no
+  			numLock: no
+  			main: yes
+  · Каталог ~/.config/hypr найден:
+    итого 36
+    drwxr-xr-x  2 northling northling  4096 ноя 26 20:45 .
+    drwxr-xr-x 43 northling northling  4096 ноя 26 21:33 ..
+    -rw-r--r--  1 northling northling   939 ноя 25 15:22 hypridle.conf
+    -rw-r--r--  1 northling northling    48 ноя 25 18:05 hyprland.conf
+    -rw-r--r--  1 northling northling 12333 ноя 26 20:45 hyprland.lua
+    -rw-r--r--  1 northling northling  2585 ноя 26 20:45 hyprlock.conf
+  · hyprland.lua — есть (формат Lua, 0.55+)
+  · hyprland.conf — есть (СТАРЫЙ синтаксис; в 0.57 не используется как основной)
+  · Размер hyprland.lua: 231 строк. Первые 15:
+    -- =============================================================================
+    -- Northling Arch — hyprland.lua  (Hyprland 0.57, Lua)
+    -- Тема Northling Midnight. Синтаксис взят из твоей РАБОЧЕЙ конфигурации nyarch
+    -- (проверено на 0.57) + официальной вики. Ничего «на всякий случай» не добавлено.
+    --
+    -- Хочешь поменять: монитор → блок D, клавиши → блок F, автозапуск → блок H.
+    -- После правки:  hyprctl reload  (ошибки покажет:  hyprctl configerrors)
+    -- Файл принадлежит проекту: при обновлении перезаписывается (старая версия — в бэкап).
+    -- =============================================================================
+    
+    local HOME = os.getenv("HOME")
+    -- Режим «Liquid Glass» (northling glass on): флаг-файл; по умолчанию выключен.
+    local glass_f = io.open(HOME .. "/.config/northling/glass", "r")
+    local GLASS = glass_f ~= nil
+    if glass_f then glass_f:close() end
+$ ls /usr/share/wayland-sessions/
+  hyprland.desktop
+  hyprland-uwsm.desktop
+  plasma.desktop
+
+==== 5. NVIDIA ====
+$ lspci -nnk | grep -A3 -Ei 'vga|3d'
+  01:00.0 VGA compatible controller [0300]: NVIDIA Corporation AD107 [GeForce RTX 4060] [10de:2882] (rev a1)
+  	Subsystem: Micro-Star International Co., Ltd. [MSI] Device [1462:5161]
+  	Kernel driver in use: nvidia
+  	Kernel modules: nouveau, nvidia_drm, nvidia
+$ nvidia-smi
+  Thu Nov 26 23:08:55 2026       
+  +-----------------------------------------------------------------------------------------+
+  | NVIDIA-SMI 620.73.04              KMD Version: 620.73.04     CUDA UMD Version: 13.5     |
+  +-----------------------------------------+------------------------+----------------------+
+  | GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+  | Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+  |                                         |                        |               MIG M. |
+  |=========================================+========================+======================|
+  |   0  NVIDIA GeForce RTX 4060        Off |   00000000:01:00.0  On |                  N/A |
+  |  0%   51C    P8            N/A  /  115W |    1095MiB /   8188MiB |      8%      Default |
+  |                                         |                        |                  N/A |
+  +-----------------------------------------+------------------------+----------------------+
+  
+  +-----------------------------------------------------------------------------------------+
+  | Processes:                                                                              |
+  |  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+  |        ID   ID                                                               Usage      |
+  |=========================================================================================|
+  |    0   N/A  N/A             729      G   /usr/lib/Xorg                            23MiB |
+  |    0   N/A  N/A            1104      G   Hyprland                                 85MiB |
+$ cat /proc/driver/nvidia/version
+  NVRM version: NVIDIA UNIX Open Kernel Module for x86_64  620.73.04  Release Build  (root@)  
+  GCC version:  gcc version 16.2.1 20260810 (GCC) 
+$ modinfo nvidia | grep -E '^(filename|version|license|description)'
+  filename:       /lib/modules/7.3.6-arch1-1/extramodules/nvidia.ko.zst
+  description:    NVIDIA core GPU kernel module
+  version:        620.73.04
+  license:        Dual MIT/GPL
+  · Тип модуля ядра: ОТКРЫТЫЙ (nvidia-open)
+$ lsmod | grep -E '^(nvidia|nouveau)'
+  nvidia_uvm           2473984  0
+  nvidia_drm            184320  122
+  nvidia_modeset       2031616  28 nvidia_drm
+  nvidia              18395136  720 nvidia_uvm,nvidia_modeset
+  · nvidia_drm.modeset = Y
+  · nvidia_drm.fbdev = Y
+$ ls /sys/class/drm/ | grep -E '^card[0-9]+$'
+  card1
+$ ls -l /dev/dri/
+  итого 0
+  drwxr-xr-x  2 root root         80 ноя 26 20:46 by-path
+  crw-rw----+ 1 root video  226,   1 ноя 26 20:46 card1
+  crw-rw-rw-  1 root render 226, 128 ноя 26 20:46 renderD128
+-- mkinitcpio / modprobe (ранний KMS)
+$ grep -E '^(MODULES|HOOKS)=' /etc/mkinitcpio.conf
+  MODULES=()
+  HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block filesystems fsck)
+$ grep -rH nvidia /etc/modprobe.d/
+-- Vulkan / GBM / VA-API
+$ vulkaninfo --summary
+  ==========
+  VULKANINFO
+  ==========
+  
+  Vulkan Instance Version: 1.4.363
+  
+  
+  Instance Extensions: count = 25
+  -------------------------------
+  VK_EXT_acquire_drm_display             : extension revision 1
+  VK_EXT_acquire_xlib_display            : extension revision 1
+  VK_EXT_debug_report                    : extension revision 10
+  VK_EXT_debug_utils                     : extension revision 2
+  VK_EXT_direct_mode_display             : extension revision 1
+  VK_EXT_display_surface_counter         : extension revision 1
+  VK_EXT_surface_maintenance1            : extension revision 1
+  VK_EXT_swapchain_colorspace            : extension revision 5
+  VK_KHR_device_group_creation           : extension revision 1
+  VK_KHR_display                         : extension revision 23
+  VK_KHR_external_fence_capabilities     : extension revision 1
+  VK_KHR_external_memory_capabilities    : extension revision 1
+  VK_KHR_external_semaphore_capabilities : extension revision 1
+  VK_KHR_get_display_properties2         : extension revision 1
+  VK_KHR_get_physical_device_properties2 : extension revision 2
+  VK_KHR_get_surface_capabilities2       : extension revision 1
+$ vainfo
+  (команды нет в системе)
+$ ls /usr/lib/gbm/ 2>/dev/null
+  dri_gbm.so
+  nvidia-drm_gbm.so
+-- Служба сна NVIDIA (нужна для надёжного suspend)
+  nvidia-suspend       enabled=disabled
+  nvidia-resume        enabled=disabled
+  nvidia-hibernate     enabled=disabled
+  nvidia-powerd        enabled=disabled
+-- Переменные окружения (только графические, белый список)
+  LIBVA_DRIVER_NAME=nvidia
+  ELECTRON_OZONE_PLATFORM_HINT=auto
+  XDG_SESSION_TYPE=wayland
+  XDG_CURRENT_DESKTOP=Hyprland
+  WAYLAND_DISPLAY=wayland-1
+  __GLX_VENDOR_LIBRARY_NAME=nvidia
+
+==== 6. SDDM и чёрный экран при входе (~3 сек) ====
+  sddm: enabled=enabled active=active
+$ ls /etc/sddm.conf /etc/sddm.conf.d/
+  ls: невозможно получить доступ к '/etc/sddm.conf': Нет такого файла или каталога
+  /etc/sddm.conf.d/:
+  theme.conf
+  virtualkbd.conf
+  zz-northling-theme.conf
+$ grep -rhE '^(Current|Session|DisplayServer|User|CursorTheme|Font)' /etc/sddm.conf /etc/sddm.conf.d/
+  grep: /etc/sddm.conf: Нет такого файла или каталога
+  Current=northling-midnight
+$ ls /usr/share/sddm/themes/
+  elarun
+  maldives
+  maya
+  northling-midnight
+  sddm-astronaut-theme
+-- Журнал: читаем текущую загрузку (если нет прав — просто пропустим)
+  sddm (первые/последние события, монотонное время):
+    [    5.883011] northling systemd[1]: Started Simple Desktop Display Manager.
+    [    5.964479] northling sddm[713]: Initializing...
+    [    5.980094] northling sddm[713]: Starting...
+    [    5.980352] northling sddm[713]: Logind interface found
+    [    5.981826] northling sddm[713]: Adding new display...
+    [    5.987236] northling sddm[713]: Loaded empty theme configuration
+    [    5.987460] northling sddm[713]: Xauthority path: "/run/sddm/xauth_YtDDco"
+    [    5.987502] northling sddm[713]: Using VT 2
+    [    5.987536] northling sddm[713]: Display server starting...
+    [    5.987548] northling sddm[713]: Writing cookie to "/run/sddm/xauth_YtDDco"
+    [    5.987655] northling sddm[713]: Running: /usr/bin/X -nolisten tcp -background none -seat seat0 vt2 -auth /run/sddm/xauth_YtDDco -noreset -displayfd 16
+    [    6.918540] northling sddm[713]: Setting default cursor
+    [   14.312539] northling sddm[713]: Session started true
+  Ядро: nvidia / drm / fbcon / efifb / simpledrm:
+    [    2.986196] northling kernel: fbcon: Taking over console
+    [    2.997134] northling kernel: simple-framebuffer simple-framebuffer.0: [drm] Registered 1 planes with drm panic
+    [    2.997140] northling kernel: [drm] Initialized simpledrm 1.0.0 for simple-framebuffer.0 on minor 0
+    [    2.997206] northling kernel: simple-framebuffer simple-framebuffer.0: [drm] fb0: simpledrmdrmfb frame buffer device
+    [    3.437011] northling kernel: nvidia: loading out-of-tree module taints kernel.
+    [    3.437059] northling kernel: nvidia: module verification failed: signature and/or required key missing - tainting kernel
+    [    3.439011] northling kernel: input: HDA NVidia HDMI/DP,pcm=3 as /devices/pci0000:00/0000:00:01.0/0000:01:00.1/sound/card2/input12
+    [    3.439055] northling kernel: input: HDA NVidia HDMI/DP,pcm=7 as /devices/pci0000:00/0000:00:01.0/0000:01:00.1/sound/card2/input13
+    [    3.439068] northling kernel: input: HDA NVidia HDMI/DP,pcm=8 as /devices/pci0000:00/0000:00:01.0/0000:01:00.1/sound/card2/input14
+    [    3.439094] northling kernel: input: HDA NVidia HDMI/DP,pcm=9 as /devices/pci0000:00/0000:00:01.0/0000:01:00.1/sound/card2/input15
+    [    3.499010] northling kernel: nvidia-nvlink: Nvlink Core is being initialized, major device number 509
+    [    3.503067] northling kernel: nvidia 0000:01:00.0: vgaarb: VGA decodes changed: olddecodes=io+mem,decodes=none:owns=none
+    [    4.690011] northling kernel: NVRM: loading NVIDIA UNIX Open Kernel Module for x86_64  620.73.04  Release Build  (root@)  
+    [    4.704010] northling kernel: nvidia-modeset: Loading NVIDIA UNIX Open Kernel Mode Setting Driver for x86_64  620.73.04  Release Build  (root@)  
+    [    4.707008] northling kernel: [drm] [nvidia-drm] [GPU ID 0x00000100] Loading driver
+    [    4.799477] northling kernel: [drm] Initialized nvidia-drm 0.0.0 for 0000:01:00.0 on minor 1
+    [    4.838046] northling kernel: nvidia 0000:01:00.0: vgaarb: deactivate vga console
+    [    4.924013] northling kernel: fbcon: nvidia-drmdrmfb (fb0) is primary device
+    [    5.008012] northling kernel: nvidia 0000:01:00.0: [drm] fb0: nvidia-drmdrmfb frame buffer device
+    [   15.522012] northling kernel: [drm] [nvidia-drm] Infoframe changed on CRTC 0 (hdr=1 colorspace=0 vsif=0), adding planes on CRTC to atomic commit
+  Запуск Hyprland и сессии (user journal):
+    [    6.944098] northling sddm-helper[776]: [PAM] Starting...
+    [    6.944114] northling sddm-helper[776]: [PAM] Authenticating...
+    [    6.944218] northling sddm-helper[776]: [PAM] returning.
+    [    6.945135] northling sddm-helper[776]: pam_unix(sddm-greeter:session): session opened for user sddm(uid=964) by (uid=0)
+    [    7.268398] northling sddm-helper[776]: Writing cookie to "/tmp/xauth_YteMCe"
+    [    7.268444] northling sddm-helper[776]: Starting X11 session: "" "/usr/bin/sddm-greeter-qt6 --socket /tmp/sddm-:0-gPpRVi --theme /usr/share/sddm/themes/northling-midnight"
+    [    7.372805] northling sddm-greeter-qt6[792]: Reading from "/usr/local/share/wayland-sessions/hyprland-uwsm.desktop"
+    [    7.372835] northling sddm-greeter-qt6[792]: Reading from "/usr/share/wayland-sessions/hyprland-uwsm.desktop"
+    [    7.373382] northling sddm-greeter-qt6[792]: Reading from "/usr/local/share/wayland-sessions/hyprland.desktop"
+    [    7.373404] northling sddm-greeter-qt6[792]: Reading from "/usr/share/wayland-sessions/hyprland.desktop"
+    [   13.840499] northling sddm-greeter-qt6[792]: Reading from "/usr/share/wayland-sessions/hyprland.desktop"
+    [   13.840941] northling sddm[713]: Reading from "/usr/share/wayland-sessions/hyprland.desktop"
+    [   13.842391] northling sddm[713]: Session "/usr/share/wayland-sessions/hyprland.desktop" selected, command: "/usr/bin/start-hyprland" for VT 1
+    [   13.867513] northling sddm-helper[820]: [PAM] Starting...
+    [   13.867523] northling sddm-helper[820]: [PAM] Authenticating...
+  Ошибки уровня err и выше за эту загрузку (первые 15):
+    ноя 26 20:46:11 northling kernel: virt/tdx: TDX not supported by the host platform
+    ноя 26 20:46:11 northling kernel: 
+    ноя 26 20:46:13 northling wpa_supplicant[703]: wlo1: nl80211: kernel reports: multicast RX registrations are not supported
+    ноя 26 20:46:13 northling wpa_supplicant[703]: p2p-dev-wlo1: nl80211: kernel reports: multicast RX registrations are not supported
+    ноя 26 20:46:15 northling dbus-broker-launch[795]: Ignoring duplicate name 'org.freedesktop.Notifications' in service file '/usr/share//dbus-1/services/org.erikreider.swaync.service'
+    ноя 26 20:46:15 northling dbus-broker-launch[795]: Ignoring duplicate name 'org.freedesktop.Notifications' in service file '/usr/share//dbus-1/services/org.kde.plasma.Notifications.service'
+    ноя 26 20:46:15 northling dbus-broker-launch[795]: Ignoring duplicate name 'org.freedesktop.Notifications' in service file '/usr/share//dbus-1/services/org.knopwob.dunst.service'
+    ноя 26 20:46:15 northling dbus-broker-launch[795]: Ignoring duplicate name 'org.freedesktop.FileManager1' in service file '/usr/share//dbus-1/services/org.xfce.Thunar.FileManager1.service'
+    ноя 26 20:46:23 northling dbus-broker-launch[1264]: Ignoring duplicate name 'org.freedesktop.Notifications' in service file '/usr/share//dbus-1/services/org.erikreider.swaync.service'
+    ноя 26 20:46:23 northling dbus-broker-launch[1264]: Ignoring duplicate name 'org.freedesktop.Notifications' in service file '/usr/share//dbus-1/services/org.kde.plasma.Notifications.service'
+    ноя 26 20:46:23 northling dbus-broker-launch[1264]: Ignoring duplicate name 'org.freedesktop.Notifications' in service file '/usr/share//dbus-1/services/org.knopwob.dunst.service'
+    ноя 26 20:46:23 northling dbus-broker-launch[1264]: Ignoring duplicate name 'org.freedesktop.FileManager1' in service file '/usr/share//dbus-1/services/org.xfce.Thunar.FileManager1.service'
+    ноя 26 20:46:23 northling systemd[898]: swaync.service: Two services allocated for the same bus name org.freedesktop.Notifications, refusing operation.
+    ноя 26 20:46:23 northling systemd[898]: swaync.service: Two services allocated for the same bus name org.freedesktop.Notifications, refusing operation.
+    ноя 26 20:46:23 northling dbus-broker-launch[1264]: Activation request for 'org.erikreider.swaync.cc' failed.
+-- Лог Hyprland (если есть)
+  · Лог: /run/user/1000/hypr/11cbc6c577b84ffb1edf4df3fc5b6128c3ae6947_1795718782_674071369/hyprland.log
+    DEBUG ]: [CCompositor::initManagers] Creating the Error Overlay!
+    DEBUG from aquamarine ]: [libseat] [libseat/libseat.c:76] Backend 'seatd' failed to open seat, skipping
+    DEBUG from aquamarine ]: [libinput] event11 - HDA NVidia HDMI/DP,pcm=3: is tagged by udev as: Switch
+    DEBUG from aquamarine ]: [libinput] event12 - HDA NVidia HDMI/DP,pcm=7: is tagged by udev as: Switch
+    DEBUG from aquamarine ]: [libinput] event13 - HDA NVidia HDMI/DP,pcm=8: is tagged by udev as: Switch
+    DEBUG from aquamarine ]: [libinput] event14 - HDA NVidia HDMI/DP,pcm=9: is tagged by udev as: Switch
+    DEBUG from aquamarine ]: drm: Starting backend for /dev/dri/card1, with driver nvidia-drm
+    DEBUG from aquamarine ]: drm: Explicit sync supported
+    ERR from aquamarine ]: Wayland backend cannot start: wl_display_connect failed (is a wayland compositor running?)
+    ERR from aquamarine ]: Implementation wayland failed, erasing.
+    DEBUG from aquamarine ]: Supported EGL client extensions: (16) EGL_EXT_platform_base EGL_EXT_device_base EGL_EXT_device_query EGL_EXT_device_enumeration EGL_KHR_client_get_all_proc_addresses EGL_E
+    DEBUG from aquamarine ]: Using: OpenGL ES 3.2 NVIDIA 620.73.04
+    DEBUG from aquamarine ]: Vendor: NVIDIA Corporation
+    DEBUG from aquamarine ]: Renderer: NVIDIA GeForce RTX 4060/PCIe/SSE2
+    DEBUG from aquamarine ]: Supported context extensions: (220) GL_EXT_shader_clock GL_EXT_shader_realtime_clock GL_EXT_base_instance GL_EXT_blend_func_extended GL_EXT_blend_minmax GL_EXT_buffer_stor
+    DEBUG from aquamarine ]: Supported EGL client extensions: (16) EGL_EXT_platform_base EGL_EXT_device_base EGL_EXT_device_query EGL_EXT_device_enumeration EGL_KHR_client_get_all_proc_addresses EGL_E
+    DEBUG from aquamarine ]: Using: OpenGL ES 3.2 NVIDIA 620.73.04
+    DEBUG from aquamarine ]: Vendor: NVIDIA Corporation
+    DEBUG from aquamarine ]: Renderer: NVIDIA GeForce RTX 4060/PCIe/SSE2
+    DEBUG from aquamarine ]: Supported context extensions: (220) GL_EXT_shader_clock GL_EXT_shader_realtime_clock GL_EXT_base_instance GL_EXT_blend_func_extended GL_EXT_blend_minmax GL_EXT_buffer_stor
+
+==== 7. Службы и звук/сеть/сон ====
+  NetworkManager: enabled=enabled active=active
+  user:pipewire                       active=active
+  user:pipewire-pulse                 active=active
+  user:wireplumber                    active=active
+  user:xdg-desktop-portal             active=active
+  user:xdg-desktop-portal-hyprland    active=active
+  user:hyprpolkitagent                active=active
+  user:hypridle                       active=inactive
+  bluetooth.service: enabled=enabled (должен быть выключен/отсутствовать)
+$ cat /sys/power/state
+  freeze mem disk
+$ cat /sys/power/mem_sleep
+  s2idle [deep]
+$ loginctl show-session self -p Type -p Desktop -p State
+  Failed to get path for session 'self': Caller does not belong to any known session.
+
+==== 8. Shell, шрифты, разработка ====
+  · zsh: zsh 5.9.2 (x86_64-pc-linux-gnu)
+  · Oh My Zsh: найден (~/.oh-my-zsh)
+  · Powerlevel10k: найден (как тема OMZ)
+  · ~/.p10k.zsh: есть
+  · ~/.zshrc: есть, 154 строк (будет сохранён в бэкап)
+$ fc-list | grep -Ei 'nerd|jetbrains|meslo' | cut -d: -f2 | sort -u
+   JetBrainsMono Nerd Font,JetBrainsMono NF
+   JetBrainsMono Nerd Font,JetBrainsMono NF,JetBrainsMono NF ExtraBold
+   JetBrainsMono Nerd Font,JetBrainsMono NF,JetBrainsMono NF ExtraLight
+   JetBrainsMono Nerd Font,JetBrainsMono NF,JetBrainsMono NF Light
+   JetBrainsMono Nerd Font,JetBrainsMono NF,JetBrainsMono NF Medium
+   JetBrainsMono Nerd Font,JetBrainsMono NF,JetBrainsMono NF SemiBold
+   JetBrainsMono Nerd Font,JetBrainsMono NF,JetBrainsMono NF Thin
+   JetBrainsMono Nerd Font Mono,JetBrainsMono NFM
+   JetBrainsMono Nerd Font Mono,JetBrainsMono NFM,JetBrainsMono NFM ExtraBold
+   JetBrainsMono Nerd Font Mono,JetBrainsMono NFM,JetBrainsMono NFM ExtraLight
+   JetBrainsMono Nerd Font Mono,JetBrainsMono NFM,JetBrainsMono NFM Light
+   JetBrainsMono Nerd Font Mono,JetBrainsMono NFM,JetBrainsMono NFM Medium
+   JetBrainsMono Nerd Font Mono,JetBrainsMono NFM,JetBrainsMono NFM SemiBold
+   JetBrainsMono Nerd Font Mono,JetBrainsMono NFM,JetBrainsMono NFM Thin
+   JetBrainsMono Nerd Font Propo,JetBrainsMono NFP
+   JetBrainsMono Nerd Font Propo,JetBrainsMono NFP,JetBrainsMono NFP ExtraBold
+   JetBrainsMono Nerd Font Propo,JetBrainsMono NFP,JetBrainsMono NFP ExtraLight
+   JetBrainsMono Nerd Font Propo,JetBrainsMono NFP,JetBrainsMono NFP Light
+   JetBrainsMono Nerd Font Propo,JetBrainsMono NFP,JetBrainsMono NFP Medium
+   JetBrainsMono Nerd Font Propo,JetBrainsMono NFP,JetBrainsMono NFP SemiBold
+   JetBrainsMono Nerd Font Propo,JetBrainsMono NFP,JetBrainsMono NFP Thin
+   JetBrainsMonoNL Nerd Font,JetBrainsMonoNL NF
+   JetBrainsMonoNL Nerd Font,JetBrainsMonoNL NF,JetBrainsMonoNL NF ExtraBold
+   JetBrainsMonoNL Nerd Font,JetBrainsMonoNL NF,JetBrainsMonoNL NF ExtraLight
+   JetBrainsMonoNL Nerd Font,JetBrainsMonoNL NF,JetBrainsMonoNL NF Light
+   JetBrainsMonoNL Nerd Font,JetBrainsMonoNL NF,JetBrainsMonoNL NF Medium
+   JetBrainsMonoNL Nerd Font,JetBrainsMonoNL NF,JetBrainsMonoNL NF SemiBold
+   JetBrainsMonoNL Nerd Font,JetBrainsMonoNL NF,JetBrainsMonoNL NF Thin
+   JetBrainsMonoNL Nerd Font Mono,JetBrainsMonoNL NFM
+   JetBrainsMonoNL Nerd Font Mono,JetBrainsMonoNL NFM,JetBrainsMonoNL NFM ExtraBold
+   JetBrainsMonoNL Nerd Font Mono,JetBrainsMonoNL NFM,JetBrainsMonoNL NFM ExtraLight
+   JetBrainsMonoNL Nerd Font Mono,JetBrainsMonoNL NFM,JetBrainsMonoNL NFM Light
+   JetBrainsMonoNL Nerd Font Mono,JetBrainsMonoNL NFM,JetBrainsMonoNL NFM Medium
+   JetBrainsMonoNL Nerd Font Mono,JetBrainsMonoNL NFM,JetBrainsMonoNL NFM SemiBold
+   JetBrainsMonoNL Nerd Font Mono,JetBrainsMonoNL NFM,JetBrainsMonoNL NFM Thin
+   JetBrainsMonoNL Nerd Font Propo,JetBrainsMonoNL NFP
+   JetBrainsMonoNL Nerd Font Propo,JetBrainsMonoNL NFP,JetBrainsMonoNL NFP ExtraBold
+   JetBrainsMonoNL Nerd Font Propo,JetBrainsMonoNL NFP,JetBrainsMonoNL NFP ExtraLight
+   JetBrainsMonoNL Nerd Font Propo,JetBrainsMonoNL NFP,JetBrainsMonoNL NFP Light
+   JetBrainsMonoNL Nerd Font Propo,JetBrainsMonoNL NFP,JetBrainsMonoNL NFP Medium
+  fastfetch  fastfetch 2.71.0 (x86_64)
+  git        git version 2.56.1
+  gh         gh version 2.106.0 (2026-11-25)
+  docker     Docker version 29.10.1, build c48360f51c
+  node       v26.13.1
+  npm        12.2.3
+  fzf        0.75.0 (c7bf2b8e)
+  zoxide     zoxide 0.10.0
+  eza        eza eza - A modern, maintained replacement for ls
+  bat        bat 0.26.1 (v0.25.0-402-g979ba226)
+  rg         ripgrep 16.0.0
+  btop       btop version: [1m1.4.8[0m
+  code       1.148.0
+  firefox    Mozilla Firefox 161.0
+  kitty      kitty 0.51.1 created by Kovid Goyal
+  dolphin    dolphin 26.08.3
+  · Docker-демон: enabled=enabled; ты в группе docker: да
+
+==== 9. Уже существующие конфиги (будут бэкапиться перед заменой) ====
+  ~/.config/hypr         есть  (4 файлов)
+  ~/.config/waybar       есть  (13 файлов)
+  ~/.config/rofi         есть  (2 файлов)
+  ~/.config/kitty        есть  (1 файлов)
+  ~/.config/swaync       есть  (2 файлов)
+  ~/.config/gtk-3.0      есть  (2 файлов)
+  ~/.config/gtk-4.0      есть  (1 файлов)
+  ~/.config/fastfetch    есть  (1 файлов)
+  ~/.config/btop         есть  (0 файлов)
+  ~/.zshrc             есть
+  ~/.p10k.zsh          есть
+  ~/.gitconfig         есть
+  · VS Code: пользовательский профиль уже есть (~/.config/Code) — его не перезапишем без бэкапа
+  · ~/Pictures/Wallpapers есть: 1 файл(ов)
+  · Найден прошлый ~/.config/northling (повторный запуск проекта?)
+
+==== Готово ====
+Отправь файл целиком: ~/northling-diag-20261126-230851.txt
+(Перед отправкой можешь просмотреть его глазами — внутри нет паролей и сетевых адресов, но имя пользователя и хоста может быть.)
