@@ -138,9 +138,6 @@ class Dock(Gtk.Window):
         # ушли «внутрь» иконки — это не уход из дока; раньше из-за этого док уезжал под курсором
         if ev.detail == Gdk.NotifyType.INFERIOR:
             return False
-        a = self.get_allocation()
-        if 0 <= ev.x < a.width and 0 <= ev.y < a.height:
-            return False
         self.reveal(False)
         return False
 
@@ -210,6 +207,7 @@ class Dock(Gtk.Window):
         return True
 
     def activate(self, app, wins):
+        self.reveal(False)  # после клика мышь «уходит» без leave-события — прячем сами
         if wins and hypr_focus(wins[0]["address"]):
             return
         if app["id"] and spawn(["gtk-launch", app["id"]]):

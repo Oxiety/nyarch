@@ -200,6 +200,8 @@ class Control(Gtk.Window):
         return False
 
     def on_click_outside(self, w, ev):
+        if ev.window is not w.get_window():
+            return False
         a = self.card.get_allocation()
         if not (a.x <= ev.x <= a.x + a.width and a.y <= ev.y <= a.y + a.height):
             Gtk.main_quit()

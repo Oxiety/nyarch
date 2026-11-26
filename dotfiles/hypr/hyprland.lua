@@ -205,7 +205,7 @@ hl.window_rule({
 -- northling-wallpaper, этот файл править не нужно.
 hl.on("hyprland.start", function()
     hl.exec_cmd("swaybg -i " .. HOME .. "/.config/northling/wallpaper -m fill")
-    hl.exec_cmd("swaync")
+    hl.exec_cmd("sh -c 'pkill -x dunst; sleep 0.4; swaync'")   -- dunst/другие демоны занимают имя уведомлений и ломают swaync
     hl.exec_cmd("waybar")
     hl.exec_cmd(HOME .. "/.local/bin/northling-widgets start")
     hl.exec_cmd(HOME .. "/.local/bin/northling-dock start")

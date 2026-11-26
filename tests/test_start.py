@@ -48,3 +48,10 @@ assert cl == [("12", "привет мир", False), ("11", "🖼  изображ
 pp = os.path.join(d, "pins.json"); ns.save_pins(["a", "б"], pp); assert ns.load_pins(pp) == ["a", "б"]
 w.store_show(pk, "fire"); w.refresh_clip(); w.store_search("x")
 print("Start store/clip OK")
+
+# ── закрепы дока ──
+dp = os.path.join(d, "dock.json")
+assert ns.load_dock_pins(dp)[0] == "firefox"
+ns.save_dock_pins(["kitty", "org.kde.dolphin"], dp)
+assert ns.load_dock_pins(dp) == ["kitty", "org.kde.dolphin"] and ns.app_key("a.desktop") == "a"
+print("Dock pins OK")

@@ -232,6 +232,40 @@ def save_pins(pins, path=None):
         json.dump(pins[:50], f, ensure_ascii=False, indent=2)
 
 
+DOCK_PATH = os.path.join(os.environ.get("XDG_CONFIG_HOME", os.path.expanduser("~/.config")), "northling", "dock.json")
+
+
+def app_key(app_id):
+    return (app_id or "").removesuffix(".desktop")
+
+
+def load_dock_pins(path=None):
+    """Закреплённые программы дока (они же — «Закреплённое» в Пуске)."""
+    try:
+        with open(path or DOCK_PATH, encoding="utf-8") as f:
+            v = json.load(f).get("pinned")
+        if isinstance(v, list):
+            return [x for x in v if isinstance(x, str)]
+    except (OSError, ValueError, AttributeError):
+        pass
+    return list(PINNED)
+
+
+def save_dock_pins(pins, path=None):
+    path = path or DOCK_PATH
+    try:
+        with open(path, encoding="utf-8") as f:
+            cfg = json.load(f)
+        if not isinstance(cfg, dict):
+            cfg = {}
+    except (OSError, ValueError):
+        cfg = {}
+    cfg["pinned"] = pins
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(cfg, f, ensure_ascii=False, indent=2)
+
+
 def save_widgets_conf(updates, path=data.CONF_PATH):
     """Точечно меняем widgets.json: {"clock": {"style": "digital"}, ...}. Остальное не трогаем."""
     try:
@@ -295,7 +329,7 @@ class Start(Gtk.Window):
 
         scrim = Gtk.EventBox()
         scrim.get_style_context().add_class("scrim")
-        scrim.connect("button-press-event", self.on_scrim_click)
+        scrim.connect("button-press-event", lambda w, ev: self.on_scrim_click(w, ev))
         self.add(scrim)
 
         self.card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=14)
@@ -414,9 +448,9 @@ class Start(Gtk.Window):
         flow.set_selection_mode(Gtk.SelectionMode.NONE)
         flow.set_homogeneous(True)
         used = set()
-        for key in PINNED:
+        for key in load_dock_pins():
             for a in self.apps:
-                if key in a["id"].lower() and a["id"] not in used:
+                if (app_key(a["id"]).lower() == key.lower() or key.lower() in a["id"].lower()) and a["id"] not in used:
                     used.add(a["id"])
                     flow.add(self.pin_button(a))
                     break
@@ -527,8 +561,31 @@ class Start(Gtk.Window):
         h.pack_start(v, True, True, 0)
         if kind == "bind":
             h.pack_end(lbl(sub, "keycap", 1.0, 30), False, False, 0)
+        if kind == "app" and payload["id"]:
+            pinned = app_key(payload["id"]) in load_dock_pins()
+            pb = Gtk.Button(label="Открепить" if pinned else "В закреп")
+            add_classes(pb, "chip")
+            pb.set_tooltip_text("Закрепить в доке и в «Закреплённом» Пуска")
+            pb.connect("clicked", lambda b, a=payload: self.toggle_pin(a, b))
+            h.pack_end(pb, False, False, 0)
         row.add(h)
         return row
+
+    def toggle_pin(self, app, button):
+        pins = load_dock_pins()
+        k = app_key(app["id"])
+        if k in pins:
+            pins.remove(k)
+            button.set_label("В закреп")
+        else:
+            pins.append(k)
+            button.set_label("Открепить")
+        try:
+            save_dock_pins(pins)
+        except OSError as e:
+            print("pins:", e, file=sys.stderr)
+            return
+        spawn([os.path.expanduser("~/.local/bin/northling-dock"), "restart"])
 
     def run_row(self, row):
         kind, payload = row.nl
@@ -839,6 +896,9 @@ class Start(Gtk.Window):
 
     # --- события ---
     def on_scrim_click(self, w, ev):
+        # координаты клика внутри прокручиваемых списков относятся к ДРУГОМУ окну — считаем «мимо» только клик по самому фону
+        if ev.window is not w.get_window():
+            return False
         a = self.card.get_allocation()
         if not (a.x <= ev.x <= a.x + a.width and a.y <= ev.y <= a.y + a.height):
             self.close_now()
