@@ -85,6 +85,7 @@ dotfiles_install() {
   nl_install_tree "$NL_ROOT/scripts/bin"      "$HOME/.local/bin"                own
   nl_install_tree "$NL_ROOT/assets/north" "$NL_STATE/north" own
   [ -e "$NL_CONF/mascot.png" ] || { run mkdir -p "$NL_CONF"; run ln -sfn "$NL_STATE/north/thumbs.png" "$NL_CONF/mascot.png"; }
+  nl_install_tree "$NL_ROOT/share/dbus-1/services" "$HOME/.local/share/dbus-1/services" own   # swaync — единственный демон уведомлений (иначе mako/dunst занимают имя)
   nl_install_tree "$NL_ROOT/share/applications" "$HOME/.local/share/applications" own
   nl_put "$NL_ROOT/themes/northling-midnight/colors.env" "$NL_CONF/colors.env" 644 own
 
