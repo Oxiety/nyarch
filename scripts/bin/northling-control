@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Центр управления Northling (Super+A). Повторный вызов закрывает.
 D="$HOME/.local/share/northling/widgets"
-if pgrep -f "northling_control.py" >/dev/null; then pkill -f northling_control.py; exit 0; fi
+pkill -f northling_control.py 2>/dev/null; sleep 0.15  # старый экземпляр (даже зависший) убираем — иначе окно не открывалось
 [ -f "$D/northling_control.py" ] || { echo "не установлено (northling update)"; exit 1; }
 python3 -c "import gi; gi.require_version('GtkLayerShell','0.1')" 2>/dev/null || { echo "нет gtk-layer-shell: northling update --full (из TTY)"; exit 1; }
 pre=""; for l in /usr/lib/libgtk-layer-shell.so /usr/lib64/libgtk-layer-shell.so /usr/lib/x86_64-linux-gnu/libgtk-layer-shell.so; do [ -e "$l" ] && { pre="$l"; break; }; done

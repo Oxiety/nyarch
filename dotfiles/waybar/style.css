@@ -2,7 +2,7 @@
    Бар без общей подложки: каждый блок — отдельный стеклянный остров. */
 
 * {
-    font-family: "JetBrainsMono Nerd Font", "Noto Sans", sans-serif;
+    font-family: "Nunito", "Inter", "Noto Sans", sans-serif;
     font-size: 13px;
     border: none;
     border-radius: 0;
@@ -26,12 +26,12 @@ window#waybar { background: transparent; color: #E5E7F5; }
 
 /* ── логотип ── */
 #custom-logo {
-    color: #D284E5;
+    color: #E3D7FF;
     font-weight: 800;
     font-size: 15px;
     padding: 0 16px;
-    background: linear-gradient(135deg, rgba(52, 38, 118, 0.95), rgba(28, 17, 85, 0.90));
-    border-color: rgba(210, 132, 229, 0.45);
+    background: linear-gradient(135deg, rgba(92, 78, 150, 0.92), rgba(60, 50, 110, 0.90));
+    border-color: rgba(227, 215, 255, 0.45);
 }
 #custom-logo:hover { color: #E5E7F5; border-color: #D284E5; }
 

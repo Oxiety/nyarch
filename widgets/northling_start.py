@@ -439,6 +439,7 @@ class Start(Gtk.Window):
         add_classes(b, "pin")
         v = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
         img = Gtk.Image.new_from_gicon(a["icon"], Gtk.IconSize.DIALOG) if a["icon"] else Gtk.Image()
+        img.set_pixel_size(48)
         v.pack_start(img, False, False, 0)
         v.pack_start(lbl(a["name"], "pin-name", 0.5, 12), False, False, 0)
         b.add(v)
@@ -513,7 +514,9 @@ class Start(Gtk.Window):
         h = Gtk.Box(spacing=12)
         add_classes(h, "row")
         if kind == "app" and payload["icon"]:
-            h.pack_start(Gtk.Image.new_from_gicon(payload["icon"], Gtk.IconSize.LARGE_TOOLBAR), False, False, 0)
+            ic = Gtk.Image.new_from_gicon(payload["icon"], Gtk.IconSize.LARGE_TOOLBAR)
+            ic.set_pixel_size(28)  # без этого большие иконки (например Happ) растягивали строку
+            h.pack_start(ic, False, False, 0)
         else:
             h.pack_start(lbl(glyph or "", "row-glyph", 0.5, 3), False, False, 0)
         v = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
@@ -549,12 +552,16 @@ class Start(Gtk.Window):
             self.run_row(row)
 
     def launch(self, a):
-        ok = spawn(["gtk-launch", a["id"]]) if a["id"] else False
+        """Сначала штатный запуск GIO (он понимает Exec из .desktop, включая %U и env), потом gtk-launch."""
+        ok = False
+        try:
+            ok = bool(a["info"].launch([], None))
+        except Exception as e:
+            print("launch(gio):", e, file=sys.stderr)
+        if not ok and a["id"]:
+            ok = spawn(["gtk-launch", a["id"]])
         if not ok:
-            try:
-                a["info"].launch([], None)
-            except Exception as e:
-                print("launch:", e, file=sys.stderr)
+            print("не удалось запустить:", a["name"], file=sys.stderr)
         self.close_now()
 
     # --- вкладка «Установка» (pacman + AUR) ---

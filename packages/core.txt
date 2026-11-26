@@ -36,7 +36,8 @@ jq
 
 # --- Шрифты (Nerd Font нужен для значков в prompt и Waybar) ---
 ttf-jetbrains-mono-nerd
-inter-font               # основной шрифт интерфейса (Пуск, виджеты)
+ttf-nunito               # мягкий шрифт интерфейса (панель, Пуск, виджеты, центр управления)
+inter-font               # запасной шрифт интерфейса
 ttf-nerd-fonts-symbols    # значки для панели и Пуска
 noto-fonts
 noto-fonts-emoji

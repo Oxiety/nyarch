@@ -14,7 +14,7 @@ Rectangle {
     readonly property color pink: "#D284E5"
     readonly property color text: "#E5E7F5"
     readonly property color dim: "#9E94CD"
-    readonly property string fontName: "JetBrainsMono Nerd Font"
+    readonly property string fontName: "Nunito"
     property int sessionIdx: sessionModel.lastIndex
 
     Image {

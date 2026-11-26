@@ -1,6 +1,6 @@
 /* Northling Start — «Пуск» */
 window { background: transparent; }
-* { font-family: "Inter", "Noto Sans", sans-serif; color: #E5E7F5; }
+* { font-family: "Nunito", "Inter", "Noto Sans", sans-serif; color: #E5E7F5; }
 .scrim { background: rgba(6, 4, 20, 0.55); }
 .start-card {
     background: linear-gradient(160deg, rgba(34, 24, 82, 0.97), rgba(12, 8, 32, 0.97));
@@ -9,8 +9,8 @@ window { background: transparent; }
     padding: 26px 28px 18px 28px;
     box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
 }
-.start-logo { font-family: "JetBrainsMono Nerd Font", monospace; font-size: 58px; font-weight: 800; color: #A78BFA;
-              text-shadow: 0 0 22px rgba(167, 139, 250, 0.75); padding: 0 6px; }
+.start-logo { font-family: "Nunito", "Inter", "Noto Sans", sans-serif; font-size: 58px; font-weight: 800; color: #E3D7FF;
+              text-shadow: 0 0 18px rgba(227, 215, 255, 0.55); padding: 0 6px; }
 .start-hello { font-size: 13px; color: #9E94CD; letter-spacing: 1px; }
 .start-search, .start-input {
     background: rgba(14, 10, 36, 0.9); border: 1px solid rgba(167, 139, 250, 0.35); border-radius: 999px;
@@ -39,14 +39,14 @@ list.results row:hover { background: rgba(167, 139, 250, 0.14); }
 .row { padding: 7px 10px; }
 .row-title { font-size: 15px; }
 .row-sub { font-size: 12px; color: #9E94CD; }
-.row-glyph { font-family: "JetBrainsMono Nerd Font", monospace; font-size: 20px; color: #D284E5; }
-.keycap { font-family: "JetBrainsMono Nerd Font", monospace; font-size: 12px; font-weight: 700; color: #C4B8F5;
+.row-glyph { font-size: 20px; color: #D9CCFF; }
+.keycap { font-family: "Nunito", "Inter", "Noto Sans", sans-serif; font-size: 12px; font-weight: 700; color: #C4B8F5;
           background: rgba(167, 139, 250, 0.14); border: 1px solid rgba(167, 139, 250, 0.35); border-radius: 8px; padding: 3px 10px; }
 
 .wall { padding: 3px; border-radius: 12px; }
 .power { padding: 26px 22px; min-width: 120px; border-radius: 22px; }
 .power:hover { background: linear-gradient(135deg, rgba(124, 92, 230, 0.45), rgba(210, 132, 229, 0.35)); }
-.power-glyph { font-family: "JetBrainsMono Nerd Font", monospace; font-size: 38px; color: #D284E5; }
+.power-glyph { font-size: 38px; color: #D9CCFF; }
 .power-name { font-size: 14px; font-weight: 600; }
 switch { background: rgba(158, 148, 205, 0.25); border-radius: 999px; border: none; }
 switch:checked { background: #7C5CE6; }

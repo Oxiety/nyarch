@@ -245,8 +245,13 @@ class Control(Gtk.Window):
 
 
 def main():
-    Control()
-    Gtk.main()
+    import traceback
+    try:
+        Control()
+        Gtk.main()
+    except Exception:
+        traceback.print_exc()  # попадёт в $XDG_RUNTIME_DIR/northling-control.log
+        raise
 
 
 if __name__ == "__main__":
